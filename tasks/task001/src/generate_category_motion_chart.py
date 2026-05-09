@@ -5,7 +5,7 @@ import plotly.express as px
 from collections import defaultdict
 
 input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/category_motion_chart.html'
+output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/category_motion_chart.html'
 
 # 실제 게시판 이름 매핑 로드
 modules_path = os.path.join(os.path.dirname(__file__), '../modules.json')

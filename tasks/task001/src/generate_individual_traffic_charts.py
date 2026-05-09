@@ -4,7 +4,7 @@ import plotly.express as px
 from collections import defaultdict
 
 input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/individual_traffic_charts.html'
+output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/individual_traffic_charts.html'
 
 stats_by_year = {}
 

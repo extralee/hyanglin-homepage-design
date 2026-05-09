@@ -7,7 +7,7 @@ import matplotlib.font_manager as fm
 from konlpy.tag import Okt
 
 input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_image = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/trend_chart.png'
+output_image = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/trend_chart.png'
 stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
 
 # 1. 불용어 로드

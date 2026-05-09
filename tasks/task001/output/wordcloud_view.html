@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>핵심 키워드 워드클라우드</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #1a1a1a;
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+        .image-container {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            max-width: 100%;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>전체 기록 핵심 키워드 워드클라우드</h1>
+        <p>게시판 전체 데이터에서 가장 자주 등장한 상위 200개 키워드 시각화</p>
+    </div>
+    <div class="image-container">
+        <img src="wordcloud.png" alt="워드클라우드 이미지">
+    </div>
+</body>
+</html>

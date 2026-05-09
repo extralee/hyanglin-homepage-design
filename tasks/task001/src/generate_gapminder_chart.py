@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from konlpy.tag import Okt
 
 input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/gapminder_keywords.html'
+output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/gapminder_keywords.html'
 stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
 
 # 1. 불용어 로드

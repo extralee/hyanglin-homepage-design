@@ -8,7 +8,7 @@ except ImportError:
     pass
 
 input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_report = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/analysis_report.md'
+output_report = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/analysis_report.md'
 
 stop_words = set()
 stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
@@ -53,7 +53,7 @@ with open(input_file, 'r', encoding='utf-8') as f:
             continue
 
 with open(output_report, 'w', encoding='utf-8') as out:
-    out.write("# 향린교회 레거시 데이터 다각도 분석 리포트 (Sample 1,000건)\n\n")
+    out.write("# 향린교회 레거시 데이터 다각도 분석 리포트 (전체 데이터)\n\n")
     out.write("> 이 리포트는 3가지 페르소나(본질 탐구자, 반대론자, 단순화자)의 관점을 코드로 구현하여 자동 생성된 결과물입니다.\n\n")
     
     out.write("### 📊 [분석 기준 안내]\n")
