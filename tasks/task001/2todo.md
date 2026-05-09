@@ -11,11 +11,11 @@
   - Validation: `node src/check-db.js` 실행 시 "DB Connected" 메시지 출력 확인
 
 ## Phase 2: 추출 및 마스킹 로직 구현
-- [ ] 개인정보 정제기 (Sanitizer) 로직 작성
+- [x] 개인정보 정제기 (Sanitizer) 로직 작성
   - Target: `tasks/task001/src/utils/sanitizer.js`
   - Action: 이메일, 전화번호 정규식 기반 마스킹 함수(실명 제외) 작성 및 간단한 테스트 로직 포함
   - Validation: `node src/utils/sanitizer.js` 실행 시 샘플 텍스트가 정상적으로 마스킹되는지 콘솔 확인
-- [ ] HTML to Markdown 변환 로직 연동
+- [x] HTML to Markdown 변환 로직 연동
   - Target: `tasks/task001/src/utils/html2md.js`
   - Action: `turndown` 라이브러리를 활용해 의미 없는 색상 태그 등은 날리고 깔끔한 MD로 변환하는 함수 작성
   - Validation: `node src/utils/html2md.js` 실행 시 샘플 HTML이 MD로 정상 변환되는지 콘솔 확인
