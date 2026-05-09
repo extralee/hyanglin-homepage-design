@@ -21,7 +21,7 @@
   - Validation: `node src/utils/html2md.js` 실행 시 샘플 HTML이 MD로 정상 변환되는지 콘솔 확인
 
 ## Phase 3: JSONL 추출 스크립트 통합
-- [ ] 스트리밍 기반 JSONL 전체 추출 스크립트 작성
+- [x] 스트리밍 기반 JSONL 전체 추출 스크립트 작성
   - Target: `tasks/task001/src/extract-jsonl.js`
   - Action: DB에서 500건씩 조회(Pagination) -> 변환/마스킹 적용 -> `output.jsonl` 파일에 Append
   - Validation: `node src/extract-jsonl.js` 실행 후 `output.jsonl` 파일 생성 및 데이터 10건(샘플) 확인

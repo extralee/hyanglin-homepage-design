@@ -3,3 +3,4 @@
 !.env.example
 backups/
 node_modules/
+*.jsonl
