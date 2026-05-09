@@ -7,7 +7,7 @@ const { sanitizeText } = require('./utils/sanitizer');
 const { convertHtmlToMarkdown } = require('./utils/html2md');
 
 const OUTPUT_FILE = path.resolve(__dirname, '../output.jsonl');
-const IS_SAMPLE = true; // 랜덤 샘플링 모드 켜기
+const IS_SAMPLE = false; // 테스트 모드 (1000건 랜덤) -> 전체 데이터 추출
 const SAMPLE_SIZE = 1000;
 const BATCH_SIZE = 500; // 전체 추출 시 Chunk 사이즈
 
