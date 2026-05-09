@@ -101,27 +101,28 @@ fig = px.scatter(
 fig.update_traces(textposition='top center')
 fig.update_layout(showlegend=False) # 텍스트 라벨이 있으므로 레전드는 숨김
 
-# 초기 속도 설정 (기본값: 1500ms)
+# 초기 속도 설정 (기본값: 7000ms)
 if len(fig.layout.updatemenus) > 0:
-    fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 1500
-    fig.layout.updatemenus[0].buttons[0].args[1]["transition"]["duration"] = 1000
+    fig.layout.updatemenus[0].buttons[0].args = [
+        None,
+        {"frame": {"duration": 7000, "redraw": True},
+         "fromcurrent": True,
+         "transition": {"duration": 6500, "easing": "quadratic-in-out"}}
+    ]
 
 # HTML 추출 및 Custom UI 주입
 html_content = fig.to_html(full_html=True, include_plotlyjs='cdn')
 
 custom_js = """
 <div style="position: absolute; top: 20px; left: 20px; z-index: 1000; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #ddd; font-family: sans-serif;">
-    <label for="speed-slider" style="font-weight: bold; font-size: 14px;">🐢 느리게 &nbsp; <input type="range" id="speed-slider" min="200" max="3000" step="100" value="1500" style="width: 200px; vertical-align: middle;"> &nbsp; 🐇 빠르게</label>
-    <div style="text-align: center; margin-top: 5px; font-size: 12px; color: #555;">현재 속도: <span id="speed-val">1.5</span>초 / 프레임</div>
+    <label for="speed-slider" style="font-weight: bold; font-size: 14px;">🐢 느리게 &nbsp; <input type="range" id="speed-slider" min="200" max="7000" step="100" value="200" style="width: 200px; vertical-align: middle;"> &nbsp; 🐇 빠르게</label>
+    <div style="text-align: center; margin-top: 5px; font-size: 12px; color: #555;">현재 속도: <span id="speed-val">7.0</span>초 / 프레임</div>
 </div>
 <script>
-    document.getElementById('speed-slider').addEventListener('input', function(e) {
-        // Range slider 값이 작을수록 빠르게 하려면, 3200에서 값을 빼서 반전시킵니다.
-        // 슬라이더 우측(3000) -> duration 200ms (빠름)
-        // 슬라이더 좌측(200) -> duration 3000ms (느림)
-        var sliderValue = parseInt(e.target.value);
-        var duration = 3200 - sliderValue; 
-        
+    var slider = document.getElementById('speed-slider');
+    
+    function applySpeed(sliderValue) {
+        var duration = 7200 - sliderValue; 
         document.getElementById('speed-val').innerText = (duration / 1000).toFixed(1);
         
         var graphDivs = document.getElementsByClassName('plotly-graph-div');
@@ -131,11 +132,24 @@ custom_js = """
                 var buttons = gd.layout.updatemenus[0].buttons;
                 if (buttons && buttons.length > 0 && buttons[0].args && buttons[0].args.length > 1) {
                     buttons[0].args[1].frame.duration = duration;
-                    buttons[0].args[1].transition.duration = duration * 0.7; 
+                    buttons[0].args[1].transition.duration = duration * 0.7;
+                    return true; // 성공적으로 적용됨
                 }
             }
         }
+        return false;
+    }
+
+    slider.addEventListener('input', function(e) {
+        applySpeed(parseInt(e.target.value));
     });
+
+    // 브라우저 로드 직후 Plotly가 렌더링될 때까지 기다렸다가 강제 초기화 적용
+    var initInterval = setInterval(function() {
+        if (applySpeed(parseInt(slider.value))) {
+            clearInterval(initInterval);
+        }
+    }, 200);
 </script>
 """
 
