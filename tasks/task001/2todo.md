@@ -1,11 +1,11 @@
 # Task 001 - Micro-tasking Todo List
 
 ## Phase 1: 개발 환경 세팅 및 DB 연결 확인
-- [ ] Node.js 프로젝트 초기화 및 필수 의존성 설치
+- [x] Node.js 프로젝트 초기화 및 필수 의존성 설치
   - Target: `tasks/task001/package.json`
   - Action: `npm init -y` 실행 후 `mysql2`, `dotenv`, `turndown`(HTML->MD 변환) 설치
   - Validation: `ls -la node_modules/mysql2` 존재 확인
-- [ ] 레거시 DB(MySQL) 연결 테스트 스크립트 작성
+- [x] 레거시 DB(MySQL) 연결 테스트 스크립트 작성
   - Target: `tasks/task001/src/check-db.js`
   - Action: `.env.local`의 `LEGACY_DB_URL`을 이용해 DB에 접속하고 핑(Ping)을 날리는 코드 작성
   - Validation: `node src/check-db.js` 실행 시 "DB Connected" 메시지 출력 확인
