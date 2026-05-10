@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +31,7 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
         }
@@ -47,7 +48,7 @@
             flex-direction: column;
             gap: 2rem;
             z-index: 10;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.2);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
         }
 
         .logo {
@@ -138,7 +139,8 @@
 
         .iframe-container {
             flex: 1;
-            background: #ffffff; /* Charts are usually white-bg */
+            background: #ffffff;
+            /* Charts are usually white-bg */
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -155,13 +157,23 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .loading-overlay {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(255, 255, 255, 0.9);
             display: flex;
             justify-content: center;
@@ -181,11 +193,13 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
-
     </style>
 </head>
+
 <body>
 
     <aside class="sidebar">
@@ -196,7 +210,7 @@
 
         <div class="nav-menu">
             <div class="nav-label">Data Visualizations</div>
-            
+
             <button class="nav-btn active" onclick="loadChart('category_motion_chart.html', this)">
                 카테고리 모션 차트
                 <span class="desc">게시판별 동적 트래픽 흐름</span>
@@ -204,11 +218,11 @@
 
             <button class="nav-btn" onclick="loadChart('traffic_bubble_chart.html', this)">
                 트래픽 버블 차트
-                <span class="desc">전체 게시판 트래픽 버블 시각화</span>
+                <span class="desc">전체 게시판 트래픽 시각화</span>
             </button>
 
-            <button class="nav-btn" onclick="loadChart('gapminder_keywords.html', this)">
-                키워드 갭마인더
+            <button class="nav-btn" onclick="loadChart('keyword_motion_chart.html', this)">
+                키워드 모션 차트
                 <span class="desc">연도별 핵심 키워드 트렌드</span>
             </button>
 
@@ -256,4 +270,5 @@
         }
     </script>
 </body>
+
 </html>

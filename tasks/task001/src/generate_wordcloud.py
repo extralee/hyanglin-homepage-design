@@ -3,35 +3,19 @@ import re
 from collections import Counter
 import os
 
-input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
+input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output_processed.jsonl'
 output_image = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/wordcloud.png'
 
-print("데이터 읽는 중...")
-text_data = []
+print("미리 전처리된 데이터 읽는 중...")
+filtered_words = []
 with open(input_file, 'r', encoding='utf-8') as f:
     for line in f:
-        data = json.loads(line)
-        text_data.append(data.get('content', '') + ' ' + data.get('title', ''))
+        try:
+            data = json.loads(line)
+            filtered_words.extend(data.get('extracted_words', []))
+        except Exception:
+            pass
 
-full_text = " ".join(text_data)
-
-print("텍스트 정제 중...")
-# URL 제거, 이미지 마크다운 제거
-full_text = re.sub(r'http[s]?://\S+', '', full_text)
-full_text = re.sub(r'!\[.*?\]\(.*?\)', '', full_text)
-# 한글과 영문, 공백만 남기기
-full_text = re.sub(r'[^가-힣a-zA-Z\s]', ' ', full_text)
-
-words = full_text.split()
-# 의미없는 조사나 짧은 단어 제외 (강화된 불용어 사전)
-stop_words = set()
-stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
-if os.path.exists(stopwords_path):
-    with open(stopwords_path, 'r', encoding='utf-8') as f:
-        stop_words = set([line.strip().lower() for line in f if line.strip()])
-else:
-    stop_words = set(['향린', '교회', '향린교회', '때문'])
-filtered_words = [w.lower() for w in words if len(w) >= 2 and w.lower() not in stop_words]
 word_counts = Counter(filtered_words)
 
 top_words = word_counts.most_common(200)
@@ -50,7 +34,9 @@ try:
             
     import numpy as np
     
-    # 1200x1200 크기의 둥근 원형 마스크 생성 (기존 대비 1.5배 확대)
+    import numpy as np
+
+    # 1200x1200 크기의 깔끔한 둥근 원형 마스크 생성
     x, y = np.ogrid[:1200, :1200]
     mask = (x - 600) ** 2 + (y - 600) ** 2 > 570 ** 2
     mask = 255 * mask.astype(int)

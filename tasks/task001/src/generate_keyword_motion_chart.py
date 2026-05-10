@@ -1,29 +1,13 @@
 import json
-import re
 import os
 import pandas as pd
 import plotly.express as px
 from collections import Counter, defaultdict
-from konlpy.tag import Okt
 
-input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
-output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/gapminder_keywords.html'
-stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
+input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output_processed.jsonl'
+output_html = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/keyword_motion_chart.html'
 
-# 1. 불용어 로드
-stop_words = set()
-if os.path.exists(stopwords_path):
-    with open(stopwords_path, 'r', encoding='utf-8') as f:
-        stop_words = set([line.strip() for line in f if line.strip()])
-
-def clean_text(text):
-    text = re.sub(r'http[s]?://\S+', '', text)
-    text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
-    text = re.sub(r'[^가-힣a-zA-Z\s]', ' ', text)
-    return text
-
-# 2. 데이터 처리 및 토큰화
-okt = Okt()
+# 2. 전처리된 데이터 로드 및 토큰화
 posts_by_year = defaultdict(list)
 overall_counter = Counter()
 
@@ -36,12 +20,11 @@ with open(input_file, 'r', encoding='utf-8') as f:
                 year = int(date_str[:4])
                 if year < 2017: continue # 너무 오래되거나 파편화된 데이터 제외
                 
-                # 형태소 분석 및 단어 세트 구성
-                content = clean_text(data.get('title', '') + " " + data.get('content', ''))
-                nouns = okt.nouns(content)
-                words = [w for w in nouns if len(w) >= 2 and w not in stop_words]
+                # 이미 전처리된 단어 목록 사용
+                words = data.get('extracted_words', [])
+                if not words:
+                    continue
                 
-                data['extracted_words'] = words
                 posts_by_year[year].append(data)
                 overall_counter.update(words)
         except Exception:
@@ -94,7 +77,7 @@ fig = px.scatter(
     size_max=60,
     range_x=[0.5, df['Frequency'].max() * 1.5],
     range_y=[-df['Impact (Total Views)'].max()*0.05, df['Impact (Total Views)'].max() * 1.1],
-    title="향린교회 핵심 키워드 다이내믹 트렌드 (Gapminder Style)",
+    title="향린교회 핵심 키워드 다이내믹 모션 차트",
     labels={"Frequency": "단어 등장 횟수 (Frequency)", "Impact (Total Views)": "단어 포함 게시글 총 조회수 (Impact)"}
 )
 

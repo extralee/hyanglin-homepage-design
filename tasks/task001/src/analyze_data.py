@@ -7,16 +7,10 @@ try:
 except ImportError:
     pass
 
-input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output.jsonl'
+input_file = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output_processed.jsonl'
 output_report = '/home/hyuk/nvme_data/prj/hyanglin-legacy/tasks/task001/output/analysis_report.md'
 
-stop_words = set()
-stopwords_path = os.path.join(os.path.dirname(__file__), 'stopwords.txt')
-if os.path.exists(stopwords_path):
-    with open(stopwords_path, 'r', encoding='utf-8') as f:
-        stop_words = set([line.strip() for line in f if line.strip()])
-else:
-    stop_words = set(['향린', '교회', '향린교회', '때문'])
+# 불용어와 동의어 사전 로드는 더 이상 여기서 수행하지 않습니다 (preprocess_text.py에서 처리 완료)
 
 def clean_text(text):
     text = re.sub(r'http[s]?://\S+', '', text)
@@ -38,9 +32,8 @@ def clean_title(title):
         return "(제목 없음 또는 마크다운 손상)"
     return title
 
+# 1. 전처리된 데이터 로드 및 연도별 그룹화
 posts_by_year = defaultdict(list)
-
-# 1. 데이터 로드 및 연도별 그룹화
 with open(input_file, 'r', encoding='utf-8') as f:
     for line in f:
         try:
@@ -49,12 +42,12 @@ with open(input_file, 'r', encoding='utf-8') as f:
             if len(date_str) >= 4:
                 year = date_str[:4]
                 posts_by_year[year].append(data)
-        except Exception as e:
+        except Exception:
             continue
 
 with open(output_report, 'w', encoding='utf-8') as out:
     out.write("# 향린교회 레거시 데이터 다각도 분석 리포트 (전체 데이터)\n\n")
-    out.write("> 이 리포트는 3가지 페르소나(본질 탐구자, 반대론자, 단순화자)의 관점을 코드로 구현하여 자동 생성된 결과물입니다.\n\n")
+    
     
     out.write("### 📊 [분석 기준 안내]\n")
     out.write("- **시대의 키워드 (시계열 트렌드)**: 형태소 분석기(KoNLPy)를 통해 추출된 순수 명사 중, 불용어를 제외하고 해당 연도에 가장 많이 사용된 단어의 단순 '등장 횟수(Frequency)'를 집계했습니다.\n")
@@ -70,16 +63,9 @@ with open(output_report, 'w', encoding='utf-8') as out:
         out.write(f"## 📅 {year}년 (총 {len(posts)}건의 기록)\n\n")
         
         # --- 1. 시계열 키워드 (Ontologist) ---
-        year_text = " ".join([p.get('title', '') + " " + p.get('content', '') for p in posts])
-        cleaned_text = clean_text(year_text)
-        
-        try:
-            okt = Okt()
-            nouns = okt.nouns(cleaned_text)
-            words = [w for w in nouns if len(w) >= 2 and w not in stop_words]
-        except NameError:
-            # konlpy가 설치되지 않은 경우 기존 로직 Fallback
-            words = [w for w in cleaned_text.split() if len(w) >= 2 and w not in stop_words]
+        words = []
+        for p in posts:
+            words.extend(p.get('extracted_words', []))
             
         top_keywords = Counter(words).most_common(20)
         
