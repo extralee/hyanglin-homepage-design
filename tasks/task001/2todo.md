@@ -1,5 +1,9 @@
 # Task 001 - Micro-tasking Todo List
 
+## 개발 원칙
+- 싱글페이지 애플리케이션(SPA)으로 개발하며, 모든 뷰는 독립적인 URL을 갖도록 한다.
+- 사용자 경험을 저해하는 팝업(Pop-up) 및 새 탭(New Tab) 사용을 금지한다.
+
 ## Phase 1: 개발 환경 세팅 및 DB 연결 확인
 - [x] Node.js 프로젝트 초기화 및 필수 의존성 설치
   - Target: `tasks/task001/package.json`
