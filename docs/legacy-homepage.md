@@ -160,3 +160,16 @@ XE(XpressEngine) 기반의 메인 사이트(`hr2` DB + `/home/hr/www/home/` 소�
 #### [4단계] DNS 실변경
 1. 가비아(또는 DNSEver 등) 설정 패널에서 `hyanglin.org`의 A 레코드 IP를 가비아 IP로 변경합니다.
 2. 이전 완료.
+
+## 8. 트러블슈팅 (Troubleshooting)
+
+### PHP 5.6과 MySQL 8.0 호환성 문제 (Charset 255 Unknown)
+* **증상**: 가비아 서버(MySQL 8.0)에 DB를 임포트하고 PHP 5.6 기반의 구형 XE 엔진에서 접속을 시도할 때 `Server sent charset (255) unknown to the client` 에러 발생.
+* **원인**: MySQL 8.0의 기본 문자셋이 `utf8mb4_0900_ai_ci` (Charset 255)로 변경되었으나, 매우 오래된 구형 PHP 5.6 클라이언트 라이브러리(`mysql_connect`)는 이를 전혀 인식하지 못해 연결 자체를 거부함.
+* **해결**: `/etc/mysql/mysql.conf.d/mysqld.cnf`에 아래 설정을 추가하여 MySQL 서버의 기본 동작을 구형 시스템과 호환되는 `utf8`로 강제 지정하고 MySQL 재시작.
+  ```ini
+  [mysqld]
+  character-set-server = utf8
+  collation-server = utf8_general_ci
+  default-authentication-plugin = mysql_native_password
+  ```
