@@ -59,7 +59,7 @@
   - **시스템 계정만 등록되고 `/home/` 디렉토리는 없는 추가 계정들** (서버 폐기 전 별도 확인 권장 — `getent passwd`로 전수 조회): `baegak`, `footact`, `forest`, `forest6`, `foundationtheforest`, `hanjifoundation`, `isangyun`, `kice`, `kpggoldenbell`, `masambooks`, `mypicturebook`, `nowonbook`, `samilprok`, `wscfap-archive`, `yunfoundation`
 
 ## 4. 결론 및 소스 확인 방법
-과거의 소스 코드나 첨부파일, 데이터베이스 연결 정보(`dbconfig.php` 등)를 확인하시려면 터미널에서 `sshh` 명령어로 접속하신 뒤, 즉시 **`cd /home/hr/www/`** 로 이동하여 소스 코드를 탐색하시면 됩니다.
+과거의 소스 코드나 첨부파일, 데이터베이스 연결 정보(`dbconfig.php` 등)를 확인하시려면 터미널에서 구 서버는 **`sshh`**, 신규 가비아 서버는 **`sshy`** 명령어로 접속하신 뒤, 즉시 **`cd /home/hr/www/`** 로 이동하여 소스 코드를 탐색하시면 됩니다.
 
 > 과거 문서에는 `/home/hyanglin/www/`를 소스 위치로 안내한 적이 있으나, Apache VirtualHost 설정상 `hyanglin.org`의 실제 DocumentRoot는 `/home/hr/www`임을 교차 검증으로 확인했습니다. (`/home/hyanglin/www/`는 사용되지 않는 빈 껍데기)
 
