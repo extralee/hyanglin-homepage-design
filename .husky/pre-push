@@ -1,0 +1,153 @@
+#!/bin/sh
+
+# 글로벌 pre-push 훅 (Husky)
+# 🔧 [CUSTOMIZE] 프로젝트에 복사한 후 프로젝트에 맞게 수정하라.
+
+# ─── 프로젝트 루트 경로 ──────────────────────────────────────────────
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+
+# ─── 0. Master Branch Deprecation Guard ──────────────────────────────
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" = "master" ]; then
+  echo "❌ [ERROR] 'master' 브랜치는 더 이상 사용되지 않습니다."
+  echo "    git branch -m master main"
+  exit 1
+fi
+
+# ─── 1. Version Check Guard (on dev/main push) ───────────────────────
+# 🔧 [CUSTOMIZE] 프로젝트의 package.json 경로에 맞게 수정하세요.
+if [ "$CURRENT_BRANCH" = "dev" ] || [ "$CURRENT_BRANCH" = "main" ]; then
+  FE_VER=$(grep '"version"' frontend/package.json | head -1 | sed 's/.*: "\(.*\)".*/\1/')
+
+  echo ""
+  echo "📦 [pre-push] Current version: v${FE_VER}"
+  echo "⚠️  Pushing to ${CURRENT_BRANCH} branch."
+
+  VERSION_CHANGED=$(git diff origin/${CURRENT_BRANCH}..HEAD -- frontend/package.json | grep '"version"' || true)
+
+  if [ -n "$VERSION_CHANGED" ]; then
+    echo "✅ Version change detected. Continuing push."
+  elif [ "$SKIP_VERSION_CHECK" = "1" ]; then
+    echo "👉 SKIP_VERSION_CHECK=1 — 버전 확인을 건너뛰고 push를 계속합니다."
+  else
+    printf "❓ Version has not been changed. Push anyway? (y/n): "
+    if ! ANSWER=$( { read -r a < /dev/tty && printf %s "$a"; } 2>/dev/null ); then
+      echo ""
+      echo "🚫 [비대화형 환경] 버전 미변경 확인을 받을 수 없어 push를 차단합니다."
+      echo "   해결 방법 (둘 중 하나):"
+      echo "   1) package.json 버전을 bump 후 다시 push"
+      echo "   2) 의도적으로 버전 없이 push하려면: SKIP_VERSION_CHECK=1 git push"
+      exit 1
+    fi
+    if [ "$ANSWER" != "y" ] && [ "$ANSWER" != "Y" ]; then
+      echo "🚫 Push aborted. Please update the version and try again."
+      exit 1
+    fi
+    echo "👉 Continuing push without changing the version."
+  fi
+  echo ""
+fi
+
+# ─── 1.5. Harness Deterministic Gate (2차 방어선) ─────────────────────
+# pre-commit에서 놓칠 수 있는 패턴을 push 직전에 재검증
+if [ -f "$PROJECT_ROOT/.bin/harness-check.sh" ]; then
+  echo "🔍 [pre-push] Running Harness Deterministic Gate Checks..."
+  if ! bash "$PROJECT_ROOT/.bin/harness-check.sh"; then
+    echo ""
+    echo "❌ [pre-push] Harness Gate 검사 실패. push를 차단합니다."
+    exit 1
+  fi
+  echo "✅ Harness Gate passed."
+fi
+
+# ─── 2. 악성코드 시그니처 검사 (Malware Signature Scan) ───────────────
+echo "🔍 [pre-push] 악성코드 시그니처 스캔 실행 중..."
+
+# 🔧 [CUSTOMIZE] IoC 시그니처 파일이 있으면 외부 파일 기반 스캔, 없으면 인라인 패턴
+SIG_FILE="$PROJECT_ROOT/.bin/ioc-signatures.grep"
+C2_FILE="$PROJECT_ROOT/.bin/ioc-c2-hosts.grep"
+
+EXCL="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=build --exclude-dir=.next --exclude-dir=coverage --exclude-dir=security"
+
+if [ -s "$SIG_FILE" ] && [ -s "$C2_FILE" ]; then
+  # 외부 시그니처 파일 기반 스캔 (SSOT 방식 — 권장)
+  SCAN_EXCL="$EXCL --exclude=*.grep"
+
+  # 시그니처 파일 무결성 검사
+  for sig in "$SIG_FILE" "$C2_FILE"; do
+    if ! grep -qvE '^\s*(#|$)' "$sig"; then
+      echo "❌ IoC 시그니처 파일이 비어 있습니다: $sig"
+      exit 1
+    fi
+  done
+
+  if grep -rIn $SCAN_EXCL -Ef <(grep -vE '^\s*(#|$)' "$SIG_FILE") . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: 알려진 IoC 시그니처 발견."
+    exit 1
+  fi
+
+  if grep -rIn $SCAN_EXCL -Ef <(grep -vE '^\s*(#|$)' "$C2_FILE") \
+       --include='*.js' --include='*.mjs' --include='*.cjs' \
+       --include='*.ts' --include='*.tsx' --include='*.jsx' \
+       --include='*.json' . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: C2 엔드포인트 발견."
+    exit 1
+  fi
+else
+  # 인라인 패턴 스캔 (시그니처 파일이 없는 프로젝트용 폴백)
+  if grep -rIn $EXCL \
+       --exclude='pre-push' --exclude='malware-scan.yml' --exclude='local-security-guard.sh' --exclude='*.md' \
+       -E '_\$_1e42|_\$af163278|_\$_ccfc' . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: 난독화 마커 발견."
+    exit 1
+  fi
+
+  if grep -rIn $EXCL \
+       --exclude='pre-push' --exclude='malware-scan.yml' --exclude='local-security-guard.sh' --exclude='*.md' \
+       -E "global\['!'\]='9-[0-9]+(-[0-9]+)?'" . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: 워터마크 패밀리(9-xxxx) 발견."
+    exit 1
+  fi
+
+  if grep -rIn $EXCL \
+       -E 'api\.trongrid\.io|fullnode\.mainnet\.aptoslabs\.com|bsc-dataseed\.binance\.org|bsc-rpc\.publicnode\.com' \
+       --include='*.js' --include='*.mjs' --include='*.cjs' \
+       --include='*.ts' --include='*.tsx' --include='*.jsx' \
+       --include='*.json' . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: C2 엔드포인트 발견."
+    exit 1
+  fi
+
+  if grep -rIn $EXCL \
+       --exclude='pre-push' --exclude='malware-scan.yml' --exclude='local-security-guard.sh' --exclude='*.md' \
+       -E 'TMfKQEd7TJJa5xNZJZ2Lep838vrzrs7mAP|TXfxHUet9pJVU1BgVkBAbrES4YUc1nGzcG' . ; then
+    echo "❌ [pre-push] 악성코드 스캔 실패: C2 지갑 주소 발견."
+    exit 1
+  fi
+fi
+
+echo "✅ [pre-push] 악성코드 스캔 통과."
+
+# ─── 3. TypeScript Type Check ────────────────────────────────────────
+# 🔧 [CUSTOMIZE] 프로젝트의 프론트엔드 경로에 맞게 수정하세요.
+if [ -d "$PROJECT_ROOT/frontend" ]; then
+  echo "🔍 [pre-push] Running frontend TypeScript type check..."
+  if ! (cd "$PROJECT_ROOT/frontend" && npx tsc --noEmit); then
+    echo "❌ TypeScript type check failed."
+    exit 1
+  fi
+  echo "✅ Type check passed."
+fi
+
+# ─── 4. ESLint Check ─────────────────────────────────────────────────
+# 🔧 [CUSTOMIZE] 프로젝트에 맞게 lint 명령을 수정하세요.
+# if [ -d "$PROJECT_ROOT/frontend" ]; then
+#   echo "🔍 [pre-push] Running ESLint check..."
+#   if ! (cd "$PROJECT_ROOT/frontend" && pnpm lint); then
+#     echo "❌ ESLint check failed."
+#     exit 1
+#   fi
+#   echo "✅ ESLint check passed."
+# fi
+
+echo "✅ [pre-push] 모든 검증 통과. 푸시를 시작합니다."

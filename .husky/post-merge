@@ -1,0 +1,54 @@
+#!/bin/sh
+# ──────────────────────────────────────────────────────────────────────
+# post-merge hook — 병합 후 파일 무결성 검증 + 자동 치료
+#
+# 🔧 [CUSTOMIZE] 이 파일은 범용 템플릿이다.
+#    프로젝트에 복사한 후 아래 3가지를 반드시 수정하라:
+#    1. TARGET_FILE — 감시 대상 파일 경로
+#    2. EXPECTED_HASH — 해당 파일의 정상 SHA-256 해시
+#    3. CLEAN_CONTENT — 자동 치료 시 덮어쓸 깨끗한 파일 내용
+#
+# 목적: git merge/pull 후 감시 대상 파일이 변조되었는지 즉시 감지한다.
+#       변조가 확인되면 자동으로 깨끗한 원본으로 복구(치료)한다.
+# ──────────────────────────────────────────────────────────────────────
+
+# 🔧 [CUSTOMIZE] 감시 대상 파일 경로
+TARGET_FILE="path/to/watched-file.mjs"
+
+# 🔧 [CUSTOMIZE] 정상 파일의 SHA-256 해시값
+# 생성 방법: sha256sum <파일경로> | cut -d' ' -f1
+EXPECTED_HASH="<YOUR_SHA256_HASH_HERE>"
+
+if [ -f "$TARGET_FILE" ]; then
+    ACTUAL_HASH=$(sha256sum "$TARGET_FILE" | cut -d' ' -f1)
+
+    # 해시가 기대값과 다르거나 파일 내에 악성 코드 패턴(워터마크·난독화 마커)이 들어있는지 검사
+    # IoC 집합: 난독화 마커 3종 + 워터마크 패밀리
+    if [ "$ACTUAL_HASH" != "$EXPECTED_HASH" ] || grep -qE "global\['!'\]|_\$_1e42|_\$af163278|_\$_ccfc" "$TARGET_FILE"; then
+        echo ""
+        echo "\033[0;31m🚨🚨🚨 [보안 침해 경고] $TARGET_FILE 파일에 감염 징후가 감지되었습니다! 🚨🚨🚨\033[0m"
+        echo "현재 해시: $ACTUAL_HASH"
+        echo "기대 해시: $EXPECTED_HASH"
+        echo "--------------------------------------------------------"
+        echo "🛠️  보안 위협 방지를 위해 즉시 표준 코드로 자동 치료(원복)합니다."
+
+        # 🔧 [CUSTOMIZE] 파일 강제 덮어쓰기 복구 — 프로젝트의 정상 파일 내용으로 교체
+        cat << 'EOF' > "$TARGET_FILE"
+// 🔧 [CUSTOMIZE] 이 블록을 프로젝트의 정상 파일 내용으로 교체하세요.
+// 예시 (postcss.config.mjs):
+// const config = {
+//   plugins: {
+//     "@tailwindcss/postcss": {},
+//     autoprefixer: {},
+//   },
+// };
+//
+// export default config;
+EOF
+
+        echo "\033[0;32m✅ 자동 치료 완료: 파일이 깨끗한 표준 규격으로 복구되었습니다.\033[0m"
+        echo "\033[0;33m⚠️  주의: 이번 pull/merge 시점에 오염된 코드를 내려받은 이력이 남았으므로,"
+        echo "   로컬 서버를 가동하셨다면 API 키나 크레덴셜의 탈취 가능성을 대비해 변경 조치를 고려하십시오.\033[0m"
+        echo ""
+    fi
+fi

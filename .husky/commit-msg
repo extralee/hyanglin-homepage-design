@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# 글로벌 commit-msg 훅 (Husky)
+# 커밋 메시지 접두어 컨벤션 + 이슈 번호 + 한글 검증
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# 1. 접두어 검사: feat:, fix:, chore:, docs:, test:, style:, refactor:, perf:
+PREFIX_REGEX="^(feat|fix|refactor|docs|test|chore|perf|style):"
+if ! echo "$COMMIT_MSG" | grep -qE "$PREFIX_REGEX"; then
+  echo "🚫 [commit-msg] 에러: 커밋 메시지는 반드시 다음 중 하나로 시작해야 합니다:"
+  echo "👉 접두어: feat:, fix:, refactor:, docs:, test:, chore:, perf:, style:"
+  echo "👉 입력된 메시지: $COMMIT_MSG"
+  exit 1
+fi
+
+# 2. 이슈 번호 검사 (chore:, docs: 제외)
+IS_CHORE_OR_DOCS=$(echo "$COMMIT_MSG" | grep -qE "^(chore|docs):" && echo "true" || echo "false")
+if [ "$IS_CHORE_OR_DOCS" = "false" ]; then
+  if ! echo "$COMMIT_MSG" | head -n 1 | grep -qE "^(feat|fix|refactor|test|perf|style):\s*#[0-9]+\s+"; then
+    echo "🚫 [commit-msg] 에러: chore/docs를 제외한 커밋은 접두어 뒤에 #이슈번호가 필요합니다."
+    echo "👉 예시: feat: #123 커밋 메시지 제목"
+    echo "👉 입력된 메시지: $COMMIT_MSG"
+    exit 1
+  fi
+fi
+
+# 3. 한글 포함 검사 (영문+숫자+기호만으로 구성되면 차단)
+# 🔧 [CUSTOMIZE] 한글이 필요 없는 프로젝트에서는 이 섹션을 제거하세요.
+if echo "$COMMIT_MSG" | head -n 1 | grep -qE "^[a-zA-Z0-9[:punct:][:space:]]+$"; then
+  echo "🚫 [commit-msg] 에러: 커밋 메시지에 한글 설명이 포함되어야 합니다."
+  echo "👉 예시: feat: #123 커밋 메시지 제목(한글 필수)"
+  echo "👉 입력된 메시지: $COMMIT_MSG"
+  exit 1
+fi
+
+exit 0
