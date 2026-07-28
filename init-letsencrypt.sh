@@ -17,7 +17,12 @@ docker compose up -d nginx
 echo "### 3. Nginx 헬스체크 및 대기 (3초)"
 sleep 3
 
-echo "### 4. 실제 Let's Encrypt 인증서 발급 시도"
+echo "### 4. 손상된 더미 인증서 설정 정리 후 실제 Let's Encrypt 인증서 발급 시도"
+docker compose run --rm --entrypoint "\
+  rm -Rf /etc/letsencrypt/live/www.hyanglin.org \
+  /etc/letsencrypt/archive/www.hyanglin.org \
+  /etc/letsencrypt/renewal/www.hyanglin.org.conf" certbot
+
 domain_args=""
 for domain in $domains; do
   domain_args="$domain_args -d $domain"
@@ -30,10 +35,9 @@ docker compose run --rm --entrypoint "\
     --email $email \
     --rsa-key-size 4096 \
     --agree-tos \
-    --force-renewal \
     --non-interactive" certbot
 
-echo "### 5. 인증서 적용을 위해 Nginx 리로드"
+echo "### 5. 실제 발급된 인증서 적용을 위해 Nginx 리로드"
 docker compose exec nginx nginx -s reload
 
 echo "모든 과정이 완료되었습니다. https://www.hyanglin.org 로 접속을 확인하세요."
