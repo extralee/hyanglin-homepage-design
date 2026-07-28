@@ -31,3 +31,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## 🤖 AI 행동 지침
 모든 AI 봇/에이전트는 사용자에게 답변을 생성하거나 마크다운 문서(`.md`)를 작성할 때, 위 제약 사항을 기본 포맷팅 규칙으로 항상 적용해야 합니다.
 <!-- END:anti-strikethrough-rules -->
+
+<!-- BEGIN:architecture-rules -->
+# 🏢 가비아 프로덕션 서버 서비스 아키텍처 수칙
+
+모든 에이전트는 서버 구동 서비스와 포트 역할을 절대 혼동해서는 안 됩니다:
+
+1. **향린교회 메인 홈페이지 (`www.hyanglin.org`, `hyanglin.org`)**:
+   - **위치**: `/var/www/hyanglin-legacy` (Docker PHP 5.6 / XE)
+   - **포트**: `8080` (Docker Nginx가 443 HTTPS로 역프록시)
+2. **향린 재정 관리 시스템 (지출결의서 전용)**:
+   - **위치**: `/var/www/hyanglin-finance/web` (Host PM2 Next.js)
+   - **포트**: `3000`
+
+> ⚠️ **경고**: 3000번 포트(재정 시스템)를 메인 홈페이지로 오판하여 Nginx 프록시를 3000번으로 변경하는 실수를 절대 범하지 말 것!
+<!-- END:architecture-rules -->
