@@ -43,19 +43,15 @@
   - **`mail/` [5.6M]**: 사용자별 시스템 메일 데이터 보관용 (소유자: root)
   - **`lost+found/` [16K]**: 파일 시스템 디스크 오류 복구용 (소유자: root)
   - **`www/` [20K]**: `/home/www/` 레벨에 별도로 존재하는 root 소유 폴더. **이름과 달리 `httpd.conf`의 전역 기본 `DocumentRoot "/home/www"`로 등록**되어 있어 매칭되는 VirtualHost가 없는 모든 요청을 받습니다(`index.html`, `index.php`, `info.php`, `robots.txt`).
-  - **기타 호스팅 사이트 및 개인 계정 폴더들**: 향린교회 외에 동일 서버에 얹혀서 구동 중이던 소규모 사이트나 개인 데이터들입니다. **서버 삭제 전, 이 계정들의 데이터(홈페이지, DB 등) 역시 모두 영구 삭제되므로 유관 부서/인원의 확인이 반드시 필요합니다.**
+  - **기타 호스팅 사이트 및 개인 계정 폴더들**: 향린교회 외에 동일 서버에 얹혀서 구동 중이던 소규모 사이트나 개인 데이터들입니다. **아래 기재된 항목들은 새 서버로 이전해야 할 최종 확인 대상입니다. (사용 안함이 확인된 사이트 기록은 삭제됨)**
     - `ahn-library/` [110M] (소유자: ongallery)
-    - `bbook/` [287M] (소유자: bbook)
-    - `cnblaw/` [192M] (소유자: cnblaw)
     - `educrit/` [2.3G] (소유자: educrit)
     - `gilmok/` [8.8G] (소유자: gilmok) - '길목' 관련 사이트
     - `haerangart/` [732M] (소유자: haerangart) - 해랑아트
     - `jaemisama/` [172M] (소유자: jaemisama)
     - `kscf/` [3.6G] (소유자: root) - KSCF (한국기독학생회총연맹) 관련 파일/폴더
-    - `moviediary/` [160M] (소유자: moviediary) - 무비다이어리
     - `ongallery/` [307M] (소유자: ahn-library) - 온갤러리
     - `parkhk/` [597M] (소유자: parkhk)
-    - `rorobrain/` [3.2G] (소유자: rorobrain)
     - `simwon/` [23G] (소유자: simone) - 심원 관련 사이트 (마찬가지로 23G 전부가 XE 게시판의 `files/` 폴더인 첨부파일 용량입니다.)
   - **시스템 계정만 등록되고 `/home/` 디렉토리는 없는 추가 계정들** (서버 폐기 전 별도 확인 권장 — `getent passwd`로 전수 조회): `baegak`, `footact`, `forest`, `forest6`, `foundationtheforest`, `hanjifoundation`, `isangyun`, `kice`, `kpggoldenbell`, `masambooks`, `mypicturebook`, `nowonbook`, `samilprok`, `wscfap-archive`, `yunfoundation`
 
@@ -104,7 +100,7 @@
 | **심원** | `simone` | `/home/simwon/` | 심원 안병무 기념사업회 |
 | **길목** | `gilmok`, `gilmokorg` | `/home/gilmok/` | 길목 웹사이트 |
 | **KSCF** | `kscf` | `/home/kscf/` (경로 추정) | 한국기독학생회총연맹 |
-| **기타** | `bbook`, `cnblaw`, `educrit` 등 | `/home/[계정명]/` | 기타 호스팅 사이트들 |
+| **기타** | `educrit`, `ahn-library` 등 | `/home/[계정명]/` | 새 서버 이전 대상 호스팅 사이트들 |
 
 **이관 절차:**
 1.  **백업**: `mysqldump` 명령어를 사용하여 각 DB별로 SQL 덤프 파일을 생성합니다.
