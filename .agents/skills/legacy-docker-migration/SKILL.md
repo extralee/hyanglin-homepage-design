@@ -46,6 +46,14 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
             memory: 512M
   ```
 
+### 4. Docker Compose 기반 Let's Encrypt SSL 부트스트랩 및 Mixed Content 방지
+- **더미 인증서 유지 및 In-place 갱신**: Nginx 시동 시 SSL 인증서 파일이 없으면 Nginx 컨테이너가 크래시된다. 최초 더미(Dummy) 인증서를 생성한 후 Nginx를 백그라운드로 구동하고, Certbot이 실행 중인 Nginx를 향해 `--force-renewal`로 덮어쓰도록 구성하여 ACME `Connection refused` 에러를 방지한다.
+- **CSP `upgrade-insecure-requests` 헤더 적용**: 레거시 DB나 템플릿에 `http://`로 하드코딩된 이미지/자원이 잔존할 경우, Nginx 설정에 아래 헤더를 탑재하여 브라우저 레벨에서 100% HTTPS로 자동 업그레이드되도록 조치한다.
+  ```nginx
+  add_header Content-Security-Policy "upgrade-insecure-requests;";
+  ```
+- **레거시 CMS 템플릿 캐시 삭제**: XpressEngine(XE) 등 레거시 CMS의 경우 `files/config/db.config.php`의 `default_url`을 `https://`로 수정한 뒤 반드시 `files/cache/*` 컴파일 템플릿 캐시를 초기화한다.
+
 ---
 
 ## 🛡️ EOL 레거시 허용 지침 (Harness Bypass)
