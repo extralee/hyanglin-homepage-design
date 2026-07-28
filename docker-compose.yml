@@ -12,12 +12,12 @@ services:
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
-  web:
-    build: .
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-    # 포트는 Nginx를 통해서만 접근하도록 외부에 노출하지 않습니다.
+#  web:
+#    build: .
+#    restart: unless-stopped
+#    environment:
+#      - NODE_ENV=production
+#    # 포트는 Nginx를 통해서만 접근하도록 외부에 노출하지 않습니다.
 
   nginx:
     image: nginx:alpine
@@ -29,8 +29,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    depends_on:
-      - web
+    # depends_on:
+    #   - web
 
   certbot:
     image: certbot/certbot

@@ -2,25 +2,20 @@
 
 # 발급할 도메인 목록
 domains="www.hyanglin.org hyanglin.org"
-email="your-email@example.com" # 실제 사용하는 이메일로 변경 필수
+email="admin@hyanglin.org" # 실제 알림을 받을 이메일 주소
 
-echo "### 1. Nginx 시작을 위해 임시 더미(Dummy) 인증서 생성 및 설정 다운로드"
+echo "### 1. Nginx 구동을 위한 임시 더미(Dummy) 인증서 생성"
 docker compose run --rm --entrypoint "\
   sh -c 'mkdir -p /etc/letsencrypt/live/www.hyanglin.org && \
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
     -keyout /etc/letsencrypt/live/www.hyanglin.org/privkey.pem \
-    -out /etc/letsencrypt/live/www.hyanglin.org/fullchain.pem -subj \"/CN=localhost\" && \
-  wget -O /etc/letsencrypt/options-ssl-nginx.conf https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf && \
-  wget -O /etc/letsencrypt/ssl-dhparams.pem https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem'" certbot
+    -out /etc/letsencrypt/live/www.hyanglin.org/fullchain.pem -subj \"/CN=localhost\"'" certbot
 
-echo "### 2. Nginx 컨테이너 백그라운드 실행"
-docker compose up --force-recreate -d nginx
+echo "### 2. Nginx 컨테이너 실행"
+docker compose up -d nginx
 
-echo "### 3. 기존 더미 인증서 삭제"
-docker compose run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/www.hyanglin.org && \
-  rm -Rf /etc/letsencrypt/archive/www.hyanglin.org && \
-  rm -Rf /etc/letsencrypt/renewal/www.hyanglin.org.conf" certbot
+echo "### 3. Nginx 헬스체크 및 대기 (3초)"
+sleep 3
 
 echo "### 4. 실제 Let's Encrypt 인증서 발급 시도"
 domain_args=""
