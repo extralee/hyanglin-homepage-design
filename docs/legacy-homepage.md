@@ -25,6 +25,7 @@
 >     ServerName hyanglin.org
 >     ServerAlias www.hyanglin.org new.hyanglin.org hyanglin.org
 > ```
+> 💡 **참고 (IP 직접 접속 시)**: 도메인이 아닌 `14.63.198.35` IP로 직접 접속했을 때 법무법인 등 다른 사이트가 노출되는 문제를 해결하기 위해, `httpd.conf` 최상단에 IP 주소를 ServerName으로 하고 DocumentRoot를 `/home/hr/www`로 설정하는 폴백(Fallback) VirtualHost 블록이 2026-07-28 부로 추가되었습니다. 따라서 이제 IP로 직접 접속해도 향린교회 홈페이지가 렌더링됩니다.
 > `/home/hyanglin/www/`에는 placeholder `index.html`만 남아 있고 실제 코드는 없습니다.
 
 ### 📁 주요 폴더 구조 및 분석 (전체 목록)
