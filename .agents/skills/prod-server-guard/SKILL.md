@@ -5,6 +5,35 @@ description: 향린 가비아 프로덕션 서버(45.115.154.229, sshy) 접속, 
 
 # 🚨 향린 프로덕션 서버 접속 경고 스킬 (Project Local)
 
+## 📌 프로덕션 서버 접속 가이드 (SSH Access Guide)
+
+AI 에이전트는 프로덕션 서버 명령 실행 시 절대로 접속 정보를 헤매지 말고 아래 명령어를 우선 사용하여 작업한다:
+
+- **SSH 접속 명령어 (SSOT)**: `ssh -p 2222 wonhyukc@45.115.154.229` (또는 터미널 `sshy` 알리아스)
+- **SCP 파일 전송 명령어**: `scp -P 2222 <local_path> wonhyukc@45.115.154.229:<remote_path>`
+- **접속 정보 상세**:
+  - **Host IP**: `45.115.154.229`
+  - **SSH Port**: `2222`
+  - **User**: `wonhyukc`
+- **원격 서버 주요 디렉터리 경로**:
+  - **메인 홈페이지 (Docker XE)**: `/home/wonhyukc/hyanglin-legacy` (Nginx 설정: `/home/wonhyukc/hyanglin-legacy/nginx/conf.d/default.conf`)
+  - **재정 관리 시스템 (Host PM2)**: `/var/www/hyanglin-finance/web` (포트 3000)
+
+### 💡 표준 원격 작업 명령어 예시
+
+```bash
+# 1. 원격 Docker 컨테이너 상태 확인
+ssh -p 2222 wonhyukc@45.115.154.229 "sudo docker ps"
+
+# 2. 원격 Nginx 설정 구문 검사 및 재로드 (Reload)
+ssh -p 2222 wonhyukc@45.115.154.229 "sudo docker exec hyanglin-legacy-nginx-1 nginx -t && sudo docker exec hyanglin-legacy-nginx-1 nginx -s reload"
+
+# 3. 로컬 Nginx 설정을 원격 서버로 동기화 (SCP)
+scp -P 2222 ./nginx/conf.d/default.conf wonhyukc@45.115.154.229:/home/wonhyukc/hyanglin-legacy/nginx/conf.d/default.conf
+```
+
+---
+
 ## 발동 시점
 
 다음 조건 중 하나라도 감지되면 **즉시, 예외 없이** 이 스킬을 활성화한다:
@@ -15,7 +44,7 @@ description: 향린 가비아 프로덕션 서버(45.115.154.229, sshy) 접속, 
 |------|--------------|
 | **SSH / SCP 접속** | `sshy`, `ssh -p 2222 wonhyukc@45.115.154.229`, `45.115.154.229` 대상 `scp` 전송 |
 | **프로덕션 Docker** | 원격 프로덕션(`45.115.154.229`) 컨텍스트에서 `docker exec`, `docker restart`, `docker compose` |
-| **프로덕션 파일 편집** | `/var/www/hyanglin-legacy`, `/var/www/hyanglin-finance` 하위 파일 편집 |
+| **프로덕션 파일 편집** | `/home/wonhyukc/hyanglin-legacy`, `/var/www/hyanglin-finance` 하위 파일 편집 |
 | **서비스 재시작** | 프로덕션 서버의 Nginx, PM2(`pm2 restart`), PHP 5.6 컨테이너 재시작 |
 | **프로덕션 DB 쓰기** | MySQL(3307/3306), PostgreSQL DB 대상 DDL/DML, `mysql`, `pg_restore` |
 
@@ -23,7 +52,7 @@ description: 향린 가비아 프로덕션 서버(45.115.154.229, sshy) 접속, 
 > - **호스트 IP**: `45.115.154.229` (SSH 포트 2222)
 > - **SSH Alias**: `sshy` (`ssh -p 2222 wonhyukc@45.115.154.229`)
 > - **서버 경로**: 
->   1. `/var/www/hyanglin-legacy` (메인 홈페이지, Docker PHP 5.6 / XE, 포트 8080)
+>   1. `/home/wonhyukc/hyanglin-legacy` (메인 홈페이지, Docker PHP 5.6 / XE, 포트 8080)
 >   2. `/var/www/hyanglin-finance/web` (재정관리 시스템, Host PM2 Next.js, 포트 3000)
 
 ---
