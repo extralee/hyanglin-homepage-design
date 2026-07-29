@@ -59,6 +59,36 @@ sudo docker compose up -d
 
 ---
 
+## 💾 DB 백업 운영 가이드
+
+메인 홈페이지(XE) MySQL 데이터베이스가 매일 자동으로 백업됩니다.
+
+| 항목 | 설정 |
+|---|---|
+| **스케줄** | 매일 새벽 3시 30분 (cron) |
+| **대상** | Docker MySQL 5.7 전체 DB (`--all-databases`) |
+| **저장 위치** | `backups/daily/` (gzip 압축) |
+| **보존 기간** | 7일 (자동 삭제) |
+| **알림** | 성공/실패 이메일 → `williamc@dplus.jeju.kr` |
+
+### 수동 백업 실행
+```bash
+# 프로덕션 서버에서
+/home/wonhyukc/hyanglin-legacy/scripts/backup-db.sh
+```
+
+### 백업 파일 복원
+```bash
+# 1. 백업 파일 압축 해제 및 복원
+gunzip < backups/daily/hyanglin_db_backup_YYYYMMDD_HHMMSS.sql.gz | \
+  sudo docker exec -i hyanglin-legacy-legacy-mysql-1 mysql -uroot -proot
+
+# 2. 로그 확인
+cat backups/backup.log
+```
+
+---
+
 ## 📌 주요 문서 레퍼런스
 - [1prd.md](file:///home/hyuk/prj/hyanglin-legacy/1prd.md) — 프로젝트 단일 진실 원천 (SSOT)
 - [AGENTS.md](file:///home/hyuk/prj/hyanglin-legacy/AGENTS.md) — AI 에이전트 지침 및 스킬 인벤토리
