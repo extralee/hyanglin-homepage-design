@@ -62,4 +62,6 @@ sudo docker compose up -d
 ## 📌 주요 문서 레퍼런스
 - [1prd.md](file:///home/hyuk/prj/hyanglin-legacy/1prd.md) — 프로젝트 단일 진실 원천 (SSOT)
 - [AGENTS.md](file:///home/hyuk/prj/hyanglin-legacy/AGENTS.md) — AI 에이전트 지침 및 스킬 인벤토리
+- [docs/new-server-architecture.md](file:///home/hyuk/prj/hyanglin-legacy/docs/new-server-architecture.md) — 신규 서버 환경 및 아키텍처 가이드 (레거시 개발자용)
 - [docs/legacy-homepage.md](file:///home/hyuk/prj/hyanglin-legacy/docs/legacy-homepage.md) — 레거시 서버 구조 상세 문서
+
