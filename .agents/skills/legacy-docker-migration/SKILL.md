@@ -59,6 +59,22 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
 - **레거시 CSS 레이아웃 꼼수(Trick) 복구**: 텅 빈 하얀색 이미지(Spacer)를 깔고 위젯을 음수 마진(`margin-top: -405px`)으로 끌어올리는 등의 기형적인 기법이 자주 사용되었다. 이관 후 레이아웃이 텅 비거나 어긋나는 경우, 단순 누락이 아니라 **데이터베이스나 캐시에 있던 인라인/커스텀 CSS(음수 마진 등)가 유실되었을 가능성**을 1순위로 의심하고, 테마 CSS 파일에 `!important`를 사용하여 강제 교정 코드를 주입해야 한다.
 - **CSS 배경 이미지 404 에러의 강력 캐싱 대응**: HTML 엑박과 달리 CSS에서 불러오는 배경 이미지의 404 에러는 브라우저에 강력하게 캐시된다. 누락 복구 후에는 사용자에게 반드시 **강력 새로고침(Ctrl+F5 또는 Cmd+Shift+R)**을 안내해야 한다.
 
+### 6. Nginx 역프록시 업로드 용량 제한 (`client_max_body_size`) 설정
+- **기본 제한 차단 방지**: 레거시 Apache(기본 업로드 제한 없음/2GB) 환경을 Docker Nginx 역프록시 구조로 마이그레이션할 때, Nginx 설정(`conf.d/default.conf`)에 `client_max_body_size`가 지정되지 않으면 Nginx 기본값(**1MB**)이 적용되어 `413 Request Entity Too Large` 에러가 일어난다.
+- **PHP 업로드 용량과 Nginx 용량 동기화**: PHP 컨테이너 내부 `upload_max_filesize` (예: `50M`) 설정에 맞춰 Nginx 설정의 SSL server 블록에도 동일한 용량의 `client_max_body_size`를 필수로 선언한다.
+  ```nginx
+  server {
+      listen 443 ssl;
+      client_max_body_size 50M; # PHP upload_max_filesize와 일치
+  }
+  ```
+
+### 7. XE/CMS 회원 로그인 식별자(Identifier) 사전 판별 규칙
+- **DB `user_id`와 실제 로그인 입력값의 구분**: DB 회원 테이블(`xe_member`)에서 `user_id`가 `t61927`로 확인되더라도, 실제 로그인 창에 입력할 아이디 값이 `user_id`라고 단정 짓지 않는다.
+- **CMS 식별자 정책 사전 검사 의무화**: 계정 조회/안내 시 반드시 XE 회원 모듈 설정(`$oMemberModel->getMemberConfig()->identifier`) 또는 DB `xe_module_config`를 사전 확인한다.
+  - `identifier`가 `email_address`로 설정된 경우: 로그인 시 입력할 '아이디'가 **이메일 주소(`mylovesarah@gmail.com`)**임을 정확히 고지하고 가이드해야 한다.
+  - `identifier`가 `user_id`로 설정된 경우: 일반 아이디(`user_id`) 사용 안내.
+
 ---
 
 ## 🛡️ EOL 레거시 허용 지침 (Harness Bypass)
