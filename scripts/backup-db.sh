@@ -10,7 +10,8 @@
 # ============================================================
 
 # ── 설정 변수 ──
-PROJECT_DIR="/home/wonhyukc/hyanglin-legacy"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BACKUP_DIR="${PROJECT_DIR}/backups/daily"
 LOG_FILE="${PROJECT_DIR}/backups/backup.log"
 RETENTION_DAYS=7
