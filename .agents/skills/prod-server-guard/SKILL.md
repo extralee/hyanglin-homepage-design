@@ -15,8 +15,10 @@ AI 에이전트는 프로덕션 서버 명령 실행 시 절대로 접속 정보
   - **Host IP**: `45.115.154.229`
   - **SSH Port**: `2222`
   - **User**: `wonhyukc`
-- **원격 서버 주요 디렉터리 경로**:
-  - **메인 홈페이지 (Docker XE)**: `/home/wonhyukc/hyanglin-legacy` (Nginx 설정: `/home/wonhyukc/hyanglin-legacy/nginx/conf.d/default.conf`)
+- **원격 서버 주요 디렉토리 경로**:
+  - **메인 홈페이지 - PHP 소스코드**: `/var/www/hyanglin-home-src/src/` (XE PHP 소스)
+  - **메인 홈페이지 - Docker 인프라**: `/var/www/hyanglin-home-infra/` (Nginx 설정: `/var/www/hyanglin-home-infra/nginx/conf.d/default.conf`)
+  - **심볼릭 링크**: `~/hyanglin-home-src` → `/var/www/hyanglin-home-src`, `~/hyanglin-home-infra` → `/var/www/hyanglin-home-infra`
   - **재정 관리 시스템 (Host PM2)**: `/var/www/hyanglin-finance/web` (포트 3000)
 
 ### 💡 표준 원격 작업 명령어 예시
@@ -44,16 +46,17 @@ scp -P 2222 ./nginx/conf.d/default.conf wonhyukc@45.115.154.229:/home/wonhyukc/h
 |------|--------------|
 | **SSH / SCP 접속** | `sshy`, `ssh -p 2222 wonhyukc@45.115.154.229`, `45.115.154.229` 대상 `scp` 전송 |
 | **프로덕션 Docker** | 원격 프로덕션(`45.115.154.229`) 컨텍스트에서 `docker exec`, `docker restart`, `docker compose` |
-| **프로덕션 파일 편집** | `/home/wonhyukc/hyanglin-legacy`, `/var/www/hyanglin-finance` 하위 파일 편집 |
+| **프로덕션 파일 편집** | `/var/www/hyanglin-home-src`, `/var/www/hyanglin-home-infra`, `/var/www/hyanglin-finance` 하위 파일 편집 |
 | **서비스 재시작** | 프로덕션 서버의 Nginx, PM2(`pm2 restart`), PHP 5.6 컨테이너 재시작 |
 | **프로덕션 DB 쓰기** | MySQL(3307/3306), PostgreSQL DB 대상 DDL/DML, `mysql`, `pg_restore` |
 
 > **프로덕션 환경 정의**:
 > - **호스트 IP**: `45.115.154.229` (SSH 포트 2222)
 > - **SSH Alias**: `sshy` (`ssh -p 2222 wonhyukc@45.115.154.229`)
-> - **서버 경로**: 
->   1. `/home/wonhyukc/hyanglin-legacy` (메인 홈페이지, Docker PHP 5.6 / XE, 포트 8080)
->   2. `/var/www/hyanglin-finance/web` (재정관리 시스템, Host PM2 Next.js, 포트 3000)
+> - **서버 경로**:
+>   1. `/var/www/hyanglin-home-src/` (메인 홈페이지 PHP 소스, Docker PHP 5.6 / XE, 포트 8080)
+>   2. `/var/www/hyanglin-home-infra/` (메인 홈페이지 Docker 인프라, Nginx/MySQL/Certbot)
+>   3. `/var/www/hyanglin-finance/web` (재정관리 시스템, Host PM2 Next.js, 포트 3000)
 
 ---
 

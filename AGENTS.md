@@ -39,8 +39,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 모든 에이전트는 서버 구동 서비스와 포트 역할을 절대 혼동해서는 안 됩니다:
 
 1. **향린교회 메인 홈페이지 (`www.hyanglin.org`, `hyanglin.org`)**:
-   - **위치**: `/var/www/hyanglin-legacy` (Docker PHP 5.6 / XE)
-   - **포트**: `8080` (Docker Nginx가 443 HTTPS로 역프록시)
+   - **PHP 소스코드**: `/var/www/hyanglin-home-src/src/` (Docker PHP 5.6 / XE)
+   - **Docker 인프라**: `/var/www/hyanglin-home-infra/` (Nginx, MySQL, Certbot Compose)
+   - **포트**: `8080` (PHP 컨테이너), `443` (Nginx HTTPS 역프록시)
+   - **심볼릭 링크**: `~/hyanglin-home-src`, `~/hyanglin-home-infra`
 2. **향린 재정 관리 시스템 (지출결의서 전용)**:
    - **위치**: `/var/www/hyanglin-finance/web` (Host PM2 Next.js)
    - **포트**: `3000`
