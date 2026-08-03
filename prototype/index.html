@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>향린교회 - We Go Where Jesus Is</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 1. STICKY HEADER & GNB LEVEL 1, LEVEL 2 NAVIGATION -->
+    <header class="site-header" id="siteHeader">
+        <div class="header-container">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-logo">
+                <div class="logo-icon"><i class="fa-solid fa-cross"></i></div>
+                <div class="logo-text">
+                    <span class="slogan">We Go Where Jesus Is</span>
+                    <span class="church-name">향린교회</span>
+                </div>
+            </a>
+
+            <!-- Level 1 GNB Desktop Menu -->
+            <nav class="desktop-gnb" id="desktopGnb">
+                <ul class="gnb-list">
+                    <!-- L1: 교회소개 -->
+                    <li class="gnb-item has-dropdown">
+                        <a href="#about" class="gnb-link">교회소개 <i class="fa-solid fa-chevron-down drop-icon"></i></a>
+                        <!-- L2 Menu Dropdown -->
+                        <div class="mega-dropdown">
+                            <div class="dropdown-inner">
+                                <div class="dropdown-info">
+                                    <h4>교회소개</h4>
+                                    <p>작은 믿음 다시 모아 새로 심는 향린 70년의 공동체입니다.</p>
+                                </div>
+                                <ul class="l2-menu-list">
+                                    <li><a href="#intro"><i class="fa-solid fa-church"></i> 향린교회 소개</a></li>
+                                    <li><a href="#confession"><i class="fa-solid fa-book-open"></i> 향린의 고백 & 정신</a></li>
+                                    <li><a href="#ministers"><i class="fa-solid fa-users"></i> 목회자 및 섬기는 이들</a></li>
+                                    <li><a href="#history"><i class="fa-solid fa-clock-rotate-left"></i> 교회 연혁</a></li>
+                                    <li><a href="#location"><i class="fa-solid fa-location-dot"></i> 찾아오는 길 & 안내</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- L1: 하늘뜻마당 -->
+                    <li class="gnb-item has-dropdown">
+                        <a href="#worship" class="gnb-link">하늘뜻마당 <i class="fa-solid fa-chevron-down drop-icon"></i></a>
+                        <div class="mega-dropdown">
+                            <div class="dropdown-inner">
+                                <div class="dropdown-info">
+                                    <h4>하늘뜻마당</h4>
+                                    <p>매주 선포되는 생명의 말씀과 기도의 나눔 공간입니다.</p>
+                                </div>
+                                <ul class="l2-menu-list">
+                                    <li><a href="#sermon"><i class="fa-solid fa-video"></i> 하늘뜻펴기 (주일설교)</a></li>
+                                    <li><a href="#bible"><i class="fa-solid fa-book-bookmark"></i> 이번 주 성서읽기</a></li>
+                                    <li><a href="#bulletin"><i class="fa-solid fa-newspaper"></i> 주보 (예배와 친교)</a></li>
+                                    <li><a href="#prayer"><i class="fa-solid fa-hands-praying"></i> 오늘의 기도문 & 묵상</a></li>
+                                    <li><a href="#sharing"><i class="fa-solid fa-heart"></i> 뜻나눔</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- L1: 공동체 & 활동 -->
+                    <li class="gnb-item has-dropdown">
+                        <a href="#community" class="gnb-link">공동체 & 활동 <i class="fa-solid fa-chevron-down drop-icon"></i></a>
+                        <div class="mega-dropdown">
+                            <div class="dropdown-inner">
+                                <div class="dropdown-info">
+                                    <h4>공동체 & 활동</h4>
+                                    <p>평화, 정의, 생명 운동으로 세상과 만나는 향린입니다.</p>
+                                </div>
+                                <ul class="l2-menu-list">
+                                    <li><a href="#notice"><i class="fa-solid fa-bullhorn"></i> 향린 소식 & 공지사항</a></li>
+                                    <li><a href="#groups"><i class="fa-solid fa-people-group"></i> 신도회 / 부서 모임</a></li>
+                                    <li><a href="#peace-action"><i class="fa-solid fa-dove"></i> 사회개혁 & 평화통일 활동</a></li>
+                                    <li><a href="#media"><i class="fa-solid fa-newspaper"></i> 언론 속의 향린</a></li>
+                                    <li><a href="#freeboard"><i class="fa-solid fa-comments"></i> 자유게시판</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- L1: 향린 아카이브 -->
+                    <li class="gnb-item has-dropdown">
+                        <a href="#archive" class="gnb-link">향린 아카이브 <i class="fa-solid fa-chevron-down drop-icon"></i></a>
+                        <div class="mega-dropdown">
+                            <div class="dropdown-inner">
+                                <div class="dropdown-info">
+                                    <h4>향린 아카이브</h4>
+                                    <p>70년 민중신학 역사와 신앙 유산을 기록합니다.</p>
+                                </div>
+                                <ul class="l2-menu-list">
+                                    <li><a href="#timeline-sec"><i class="fa-solid fa-timeline"></i> 70년 역사 타임라인</a></li>
+                                    <li><a href="#documents"><i class="fa-solid fa-file-contract"></i> 주요 신앙 고백 및 문서</a></li>
+                                    <li><a href="#photo-archive"><i class="fa-solid fa-image"></i> 사진 자료실</a></li>
+                                    <li><a href="#video-archive"><i class="fa-solid fa-film"></i> 동영상 / 오디오 자료실</a></li>
+                                    <li><a href="#old-home"><i class="fa-solid fa-box-archive"></i> 옛 홈페이지 아카이브</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- L1: 교인마당 -->
+                    <li class="gnb-item has-dropdown">
+                        <a href="#member" class="gnb-link">교인마당 <i class="fa-solid fa-chevron-down drop-icon"></i></a>
+                        <div class="mega-dropdown">
+                            <div class="dropdown-inner">
+                                <div class="dropdown-info">
+                                    <h4>교인마당</h4>
+                                    <p>향린 교인들을 위한 출석, 교제, 돌봄 서비스입니다.</p>
+                                </div>
+                                <ul class="l2-menu-list">
+                                    <li><a href="#member-board"><i class="fa-solid fa-lock"></i> 교인 전용 게시판</a></li>
+                                    <li><a href="#attendance"><i class="fa-solid fa-user-check"></i> 주일 출석 명부</a></li>
+                                    <li><a href="#care"><i class="fa-solid fa-hand-holding-heart"></i> 교인 돌봄 시스템</a></li>
+                                    <li><a href="#offering"><i class="fa-solid fa-gift"></i> 온라인 헌금 안내</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Right Actions -->
+            <div class="header-actions">
+                <a href="#live" class="btn-live"><i class="fa-solid fa-circle-play"></i> 온라인 주일예배</a>
+                <button class="mobile-toggle" id="mobileToggle" aria-label="메뉴 열기">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Navigation (Level 1 & Level 2 Accordion) -->
+        <div class="mobile-drawer" id="mobileDrawer">
+            <div class="drawer-header">
+                <span class="drawer-title">향린교회 메뉴</span>
+                <button class="drawer-close" id="drawerClose"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="drawer-body">
+                <ul class="mobile-menu-accordion">
+                    <!-- Mobile L1: 교회소개 -->
+                    <li class="accordion-item">
+                        <button class="accordion-btn">교회소개 <i class="fa-solid fa-plus"></i></button>
+                        <ul class="accordion-sub">
+                            <li><a href="#intro">향린교회 소개</a></li>
+                            <li><a href="#confession">향린의 고백 & 정신</a></li>
+                            <li><a href="#ministers">목회자 및 섬기는 이들</a></li>
+                            <li><a href="#history">교회 연혁</a></li>
+                            <li><a href="#location">찾아오는 길 & 안내</a></li>
+                        </ul>
+                    </li>
+                    <!-- Mobile L1: 하늘뜻마당 -->
+                    <li class="accordion-item">
+                        <button class="accordion-btn">하늘뜻마당 <i class="fa-solid fa-plus"></i></button>
+                        <ul class="accordion-sub">
+                            <li><a href="#sermon">하늘뜻펴기 (주일설교)</a></li>
+                            <li><a href="#bible">이번 주 성서읽기</a></li>
+                            <li><a href="#bulletin">주보 (예배와 친교)</a></li>
+                            <li><a href="#prayer">오늘의 기도문 & 묵상</a></li>
+                            <li><a href="#sharing">뜻나눔</a></li>
+                        </ul>
+                    </li>
+                    <!-- Mobile L1: 공동체 & 활동 -->
+                    <li class="accordion-item">
+                        <button class="accordion-btn">공동체 & 활동 <i class="fa-solid fa-plus"></i></button>
+                        <ul class="accordion-sub">
+                            <li><a href="#notice">향린 소식 & 공지사항</a></li>
+                            <li><a href="#groups">신도회 / 부서 모임</a></li>
+                            <li><a href="#peace-action">사회개혁 & 평화통일 활동</a></li>
+                            <li><a href="#media">언론 속의 향린</a></li>
+                            <li><a href="#freeboard">자유게시판</a></li>
+                        </ul>
+                    </li>
+                    <!-- Mobile L1: 향린 아카이브 -->
+                    <li class="accordion-item">
+                        <button class="accordion-btn">향린 아카이브 <i class="fa-solid fa-plus"></i></button>
+                        <ul class="accordion-sub">
+                            <li><a href="#timeline-sec">70년 역사 타임라인</a></li>
+                            <li><a href="#documents">주요 신앙 고백 및 문서</a></li>
+                            <li><a href="#photo-archive">사진 자료실</a></li>
+                            <li><a href="#video-archive">동영상 / 오디오 자료실</a></li>
+                            <li><a href="#old-home">옛 홈페이지 아카이브</a></li>
+                        </ul>
+                    </li>
+                    <!-- Mobile L1: 교인마당 -->
+                    <li class="accordion-item">
+                        <button class="accordion-btn">교인마당 <i class="fa-solid fa-plus"></i></button>
+                        <ul class="accordion-sub">
+                            <li><a href="#member-board">교인 전용 게시판</a></li>
+                            <li><a href="#attendance">주일 출석 명부</a></li>
+                            <li><a href="#care">교인 돌봄 시스템</a></li>
+                            <li><a href="#offering">온라인 헌금 안내</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main>
+        <!-- 2. HERO SECTION -->
+        <section class="hero-section">
+            <div class="hero-bg-overlay"></div>
+            <div class="hero-content container">
+                <div class="hero-text-badge">
+                    <span class="badge-tag">2026 향린 표어</span>
+                    <p class="hero-slogan">작은 믿음 다시 모아 새로 심는 향린 70</p>
+                </div>
+
+                <h1 class="hero-title">예수께서 계신 곳,<br>생명과 평화의 공동체</h1>
+                
+                <!-- Today Worship Card Overlay -->
+                <div class="hero-worship-card">
+                    <div class="card-tag"><i class="fa-solid fa-calendar-check"></i> 이번 주 주일예배 안내 (2026.08.09)</div>
+                    <h2 class="sermon-title">"성찰과 조율"</h2>
+                    <p class="sermon-meta">
+                        <span><i class="fa-solid fa-book"></i> 마태복음서 6:5-8</span>
+                        <span><i class="fa-solid fa-user-tie"></i> 한문덕 목사</span>
+                    </p>
+                    <div class="hero-actions">
+                        <a href="https://youtube.com" target="_blank" class="btn-primary"><i class="fa-solid fa-play"></i> 주일예배 동영상 (유튜브)</a>
+                        <a href="#sermon-text" class="btn-secondary"><i class="fa-solid fa-file-text"></i> 설교문 읽기</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. BENTO BOX GRID SECTION -->
+        <section class="bento-section container">
+            <div class="section-header">
+                <span class="section-subtitle">HYANGLIN HIGHLIGHTS</span>
+                <h2 class="section-title">한눈에 보는 향린의 오늘</h2>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Bento 1: Large Video Sermon Player Card -->
+                <div class="bento-card bento-large card-sermon">
+                    <div class="card-header">
+                        <span class="card-category"><i class="fa-solid fa-video"></i> 최근 하늘뜻 (설교)</span>
+                        <span class="card-date">2026-08-02</span>
+                    </div>
+                    <div class="video-mockup">
+                        <div class="video-overlay">
+                            <button class="play-btn"><i class="fa-solid fa-play"></i></button>
+                            <span class="video-duration">45:20</span>
+                        </div>
+                        <img src="hero_bg.jpg" alt="설교 영상 썸네일" class="video-thumb">
+                    </div>
+                    <div class="card-body">
+                        <h3>향린의 포대기에 감싸여</h3>
+                        <p class="speaker">이영라 목사 | 마주한 낯섦과 공동체의 부르심</p>
+                        <div class="media-controls">
+                            <a href="#" class="media-link"><i class="fa-solid fa-headphones"></i> 오디오 듣기</a>
+                            <a href="#" class="media-link"><i class="fa-solid fa-download"></i> 설교문 PDF</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 2: Medium Community News Slider -->
+                <div class="bento-card bento-medium card-news">
+                    <div class="card-header">
+                        <span class="card-category"><i class="fa-solid fa-bullhorn"></i> 향린 소식 & 행사</span>
+                        <a href="#notice" class="more-link">전체보기 <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="news-list">
+                        <div class="news-item">
+                            <span class="news-badge bg-green">사회개혁</span>
+                            <div class="news-info">
+                                <h4>사회개혁과 내란세력 척결 수요평화거리기도회</h4>
+                                <span class="news-date">매월 첫째주 수요일 PM 07:30</span>
+                            </div>
+                        </div>
+                        <div class="news-item">
+                            <span class="news-badge bg-amber">강좌</span>
+                            <div class="news-info">
+                                <h4>인문학강좌: 민주주의의 새로운 도전과 과제</h4>
+                                <span class="news-date">2026-08-14 (금) 안병무도서관</span>
+                            </div>
+                        </div>
+                        <div class="news-item">
+                            <span class="news-badge bg-sand">모임</span>
+                            <div class="news-info">
+                                <h4>2026년 8월 전체 여신도회 임원회의</h4>
+                                <span class="news-date">2026-08-16 주일 2부 예배 후</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 3: Today's Prayer & Scripture Card -->
+                <div class="bento-card bento-medium card-prayer">
+                    <div class="card-header">
+                        <span class="card-category"><i class="fa-solid fa-hands-praying"></i> 오늘의 기도문 & 성서 묵상</span>
+                    </div>
+                    <div class="prayer-body">
+                        <blockquote class="prayer-quote">
+                            "주님, 우리가 서로의 상처를 안아주고 낮고 소외된 곳으로 함께 걸어가는 은혜를 주소서."
+                        </blockquote>
+                        <p class="prayer-author">- 2026-08-02 감사기도 (장명숙 집사)</p>
+                        <div class="card-divider"></div>
+                        <div class="daily-bible">
+                            <span class="bible-tag"><i class="fa-solid fa-book-open"></i> 이번 주 성서읽기</span>
+                            <p class="bible-passage">마태복음서 6:5-8 / 다니엘서 9:3-4 / 빌립보서 4:6-7</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 4: Small Bulletin & Download Card -->
+                <div class="bento-card bento-small card-bulletin">
+                    <div class="card-header">
+                        <span class="card-category"><i class="fa-solid fa-newspaper"></i> 주보</span>
+                    </div>
+                    <div class="small-card-content">
+                        <h4>2026년 8월 2일 (제31호)</h4>
+                        <p>예배 순서 및 공동체 소식</p>
+                        <a href="#" class="btn-download"><i class="fa-solid fa-file-arrow-down"></i> 주보 다운로드</a>
+                    </div>
+                </div>
+
+                <!-- Bento 5: Small Online Offering Info Card -->
+                <div class="bento-card bento-small card-offering">
+                    <div class="card-header">
+                        <span class="card-category"><i class="fa-solid fa-gift"></i> 온라인 헌금</span>
+                    </div>
+                    <div class="small-card-content">
+                        <h4>마음을 모으는 헌금 안내</h4>
+                        <p>농협 000-0000-0000-00<br>(예금주: 향린교회)</p>
+                        <a href="#offering" class="btn-text-link">계좌 전체보기 <i class="fa-solid fa-chevron-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. INTERACTIVE ARCHIVE TIMELINE SECTION -->
+        <section class="timeline-section" id="timeline-sec">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-subtitle">HYANGLIN 70 YEARS ARCHIVE</span>
+                    <h2 class="section-title">역사와 함께 걸어온 향린 70년</h2>
+                    <p class="section-desc">1953년 창립 이래 민중신학, 평화통일, 민주화 운동의 발자취입니다.</p>
+                </div>
+
+                <!-- Tab Filter -->
+                <div class="timeline-tabs">
+                    <button class="tab-btn active" data-tab="all">전체 역사</button>
+                    <button class="tab-btn" data-tab="event">주요 사건 중심</button>
+                    <button class="tab-btn" data-tab="people">인물 & 민중신학</button>
+                </div>
+
+                <!-- Timeline Horizontal Grid -->
+                <div class="timeline-grid">
+                    <div class="timeline-card">
+                        <span class="year-tag">1953</span>
+                        <h3>향린교회 창립</h3>
+                        <p>안병무, 홍창유 등 평신도 12명이 명동에서 첫 창립 예배를 드림.</p>
+                    </div>
+                    <div class="timeline-card">
+                        <span class="year-tag">1970 - 80s</span>
+                        <h3>민주화 및 민중신학 운동</h3>
+                        <p>유신독재 반대, 인권 및 민주화 운동의 성지로 자리매김.</p>
+                    </div>
+                    <div class="timeline-card">
+                        <span class="year-tag">1993</span>
+                        <h3>향린 희년 (40주년) 선언</h3>
+                        <p>평화통일과 사회개혁 선언문 발표 및 분가 선교 실천.</p>
+                    </div>
+                    <div class="timeline-card highlight">
+                        <span class="year-tag">2023 - 현재</span>
+                        <h3>향린 70주년 & 새로운 도약</h3>
+                        <p>작은 믿음 다시 모아 새로 심는 70년, 온·오프라인 공동체 선교.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 5. FOOTER SECTION -->
+    <footer class="site-footer">
+        <div class="container footer-container">
+            <div class="footer-brand">
+                <div class="brand-logo footer-logo">
+                    <div class="logo-icon"><i class="fa-solid fa-cross"></i></div>
+                    <div class="logo-text">
+                        <span class="slogan">We Go Where Jesus Is</span>
+                        <span class="church-name">한국기독교장로회 향린교회</span>
+                    </div>
+                </div>
+                <p class="footer-address">
+                    서울특별시 중구 을지로16길 27 (입정동 264-11)<br>
+                    TEL: 02-776-3730 | FAX: 02-776-3733 | E-mail: hyanglin@hyanglin.org
+                </p>
+            </div>
+
+            <div class="footer-info">
+                <h4>예배 시간 안내</h4>
+                <ul>
+                    <li><strong>주일 1부 예배:</strong> 주일 오전 9:00 (전교인)</li>
+                    <li><strong>주일 2부 예배:</strong> 주일 오전 11:00 (온·오프라인)</li>
+                    <li><strong>어린이/청소년 예배:</strong> 주일 오전 11:00</li>
+                </ul>
+            </div>
+
+            <div class="footer-links">
+                <h4>빠른 링크</h4>
+                <ul>
+                    <li><a href="#intro">교회소개</a></li>
+                    <li><a href="#sermon">하늘뜻펴기</a></li>
+                    <li><a href="#location">찾아오는 길</a></li>
+                    <li><a href="#member">교인마당</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container bottom-inner">
+                <p>&copy; 2026 향린교회 (Hyanglin Presbyterian Church). All rights reserved.</p>
+                <div class="social-links">
+                    <a href="https://youtube.com" target="_blank" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
