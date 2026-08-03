@@ -67,7 +67,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. Video Mockup Interaction
+    // 4. Dark Mode Theme Switching System
+    const themeToggle = document.getElementById('themeToggle');
+    const drawerThemeToggle = document.getElementById('drawerThemeToggle');
+    const savedTheme = localStorage.getItem('hyanglin-theme');
+
+    const updateThemeIcon = (theme) => {
+        const isDark = theme === 'dark';
+        const iconClass = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        
+        [themeToggle, drawerThemeToggle].forEach(btn => {
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = iconClass;
+            }
+        });
+    };
+
+    const setTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('hyanglin-theme', theme);
+        updateThemeIcon(theme);
+    };
+
+    // Apply saved theme or system preference
+    if (savedTheme) {
+        setTheme(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+    }
+
+    const toggleTheme = () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    };
+
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    if (drawerThemeToggle) drawerThemeToggle.addEventListener('click', toggleTheme);
+
+    // 5. Mobile Bottom Bar "전체메뉴" Button Handler
+    const bottomMenuToggle = document.getElementById('bottomMenuToggle');
+    if (bottomMenuToggle && mobileDrawer) {
+        bottomMenuToggle.addEventListener('click', () => {
+            mobileDrawer.classList.add('open');
+        });
+    }
+
+    // 6. Video Mockup Interaction
     const playBtn = document.querySelector('.play-btn');
     if (playBtn) {
         playBtn.addEventListener('click', () => {

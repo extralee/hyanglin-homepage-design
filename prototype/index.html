@@ -132,6 +132,9 @@
 
             <!-- Right Actions -->
             <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggle" aria-label="테마 전환">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
                 <a href="#live" class="btn-live"><i class="fa-solid fa-circle-play"></i> 온라인 주일예배</a>
                 <button class="mobile-toggle" id="mobileToggle" aria-label="메뉴 열기">
                     <i class="fa-solid fa-bars"></i>
@@ -143,7 +146,12 @@
         <div class="mobile-drawer" id="mobileDrawer">
             <div class="drawer-header">
                 <span class="drawer-title">향린교회 메뉴</span>
-                <button class="drawer-close" id="drawerClose"><i class="fa-solid fa-xmark"></i></button>
+                <div class="drawer-actions">
+                    <button class="theme-toggle-btn mobile-drawer-theme-btn" id="drawerThemeToggle" aria-label="테마 전환">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button class="drawer-close" id="drawerClose" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
             <div class="drawer-body">
                 <ul class="mobile-menu-accordion">
@@ -383,6 +391,30 @@
             </div>
         </section>
     </main>
+
+    <!-- 4.5 MOBILE BOTTOM NAVIGATION BAR (FIXED BOTTOM FOR MOBILE UX) -->
+    <nav class="mobile-bottom-bar" id="mobileBottomBar">
+        <a href="#" class="bottom-nav-item active">
+            <i class="fa-solid fa-house"></i>
+            <span>홈</span>
+        </a>
+        <a href="#sermon" class="bottom-nav-item">
+            <i class="fa-solid fa-video"></i>
+            <span>하늘뜻</span>
+        </a>
+        <a href="#notice" class="bottom-nav-item">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>소식</span>
+        </a>
+        <a href="#timeline-sec" class="bottom-nav-item">
+            <i class="fa-solid fa-timeline"></i>
+            <span>아카이브</span>
+        </a>
+        <button class="bottom-nav-item" id="bottomMenuToggle">
+            <i class="fa-solid fa-bars"></i>
+            <span>전체메뉴</span>
+        </button>
+    </nav>
 
     <!-- 5. FOOTER SECTION -->
     <footer class="site-footer">
