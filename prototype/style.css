@@ -1034,12 +1034,99 @@ ul {
     background-color: var(--surface-alt);
 }
 
+[data-theme="dark"] .dropdown-info h4 {
+    color: var(--accent);
+}
+
+[data-theme="dark"] .l2-menu-list a {
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .l2-menu-list a:hover {
+    background-color: rgba(233, 196, 106, 0.12);
+    color: var(--accent);
+}
+
 [data-theme="dark"] .mobile-drawer {
     background-color: var(--surface);
 }
 
 [data-theme="dark"] .accordion-btn {
     color: var(--text-main);
+}
+
+/* Dark Mode Typography & Contrast Enhancements */
+[data-theme="dark"] .section-title {
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .section-subtitle {
+    color: var(--accent);
+}
+
+[data-theme="dark"] .card-category {
+    color: var(--accent);
+}
+
+[data-theme="dark"] .card-body h3,
+[data-theme="dark"] .news-info h4,
+[data-theme="dark"] .small-card-content h4,
+[data-theme="dark"] .timeline-card h3 {
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .media-link,
+[data-theme="dark"] .btn-text-link {
+    color: var(--accent);
+}
+
+[data-theme="dark"] .prayer-quote {
+    color: #E2E8F0;
+    border-left-color: var(--accent);
+}
+
+[data-theme="dark"] .bg-green {
+    background-color: rgba(233, 196, 106, 0.15);
+    color: var(--accent);
+}
+
+[data-theme="dark"] .bg-amber {
+    background-color: rgba(233, 196, 106, 0.25);
+    color: #F3D079;
+}
+
+[data-theme="dark"] .bg-sand {
+    background-color: rgba(212, 163, 115, 0.25);
+    color: #E0B58B;
+}
+
+[data-theme="dark"] .timeline-card {
+    background-color: var(--surface);
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .timeline-card.highlight {
+    background-color: #1F2E29;
+    border-top-color: var(--accent);
+}
+
+[data-theme="dark"] .tab-btn {
+    background-color: var(--surface);
+    color: var(--text-muted);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .tab-btn.active,
+[data-theme="dark"] .tab-btn:hover {
+    background-color: var(--accent);
+    color: var(--primary);
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .btn-download {
+    background-color: var(--accent);
+    color: var(--primary);
+    font-weight: 700;
 }
 
 /* RESPONSIVE MEDIA QUERIES */
