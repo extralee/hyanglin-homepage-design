@@ -26,10 +26,10 @@
 ### 🏚️ 과거 — KT 서버 (14.63.198.35)
 
 ```mermaid
+---
+title: KT 서버 — CentOS 5.8 / 2017년 EOL
+---
 flowchart TD
-  title_kt(["KT 서버 — CentOS 5.8 / 2017년 EOL"])
-  title_kt --- apache
-
   apache["Apache 2.x<br>Port 80 · HTTP 평문"]
   apache --> hr["⭐ 향린교회 메인 68G<br>home 41G + bbs_old 28G<br>DB: hr2, hr"]
   apache --> simwon["심원 23G<br>안병무 기념사업회"]
@@ -38,8 +38,6 @@ flowchart TD
   apache --> educrit["교육비평 2.3G"]
   apache --> others["해랑아트 · 온갤러리<br>parkhk · jaemisama<br>ahn-library 등"]
   runtime[("⚠️ PHP 5.6 + MySQL 5.1<br>전부 호스트 직접 설치")]
-
-  style title_kt fill:#fee2e2,stroke:#ef4444,color:#000,font-weight:bold
   style apache fill:#fecaca,stroke:#dc2626,color:#000
   style hr fill:#fef3c7,stroke:#f59e0b,color:#000
   style simwon fill:#fecaca,stroke:#dc2626,color:#000
@@ -55,10 +53,10 @@ flowchart TD
 ### ✅ 현재 — 가비아 프로덕션 서버 (45.115.154.229)
 
 ```mermaid
+---
+title: ✅ 가비아 서버 — Ubuntu 22.04 LTS
+---
 flowchart TD
-  title_gabia(["\u2705 가비아 서버 — Ubuntu 22.04 LTS"])
-  title_gabia --- nginx
-
   nginx["🔒 Nginx Docker<br>Port 80/443<br>SSL + 리버스 프록시"]
 
   subgraph docker_zone["🐳 Docker 격리 영역"]
@@ -75,8 +73,6 @@ flowchart TD
   nginx -->|"재정 시스템"| nextjs
   xe --> mysql
   nextjs --> pg
-
-  style title_gabia fill:#ecfdf5,stroke:#10b981,color:#000,font-weight:bold
   style nginx fill:#dbeafe,stroke:#3b82f6,color:#000
   style docker_zone fill:#e0e7ff,stroke:#6366f1,color:#000
   style xe fill:#c7d2fe,stroke:#4f46e5,color:#000
@@ -161,10 +157,10 @@ Docker화하면 달라지는 점:
 KT 서버에 남아있는 다른 레거시 사이트(심원, 길목, KSCF 등)가 가비아로 이전될 경우, 다음과 같이 **사이트별 독립 Docker 컨테이너**로 격리하는 것이 권장됩니다:
 
 ```mermaid
+---
+title: 🔮 KT 레거시 이전 완료 후
+---
 flowchart TD
-  title_future(["\ud83d\udd2e KT 레거시 이전 완료 후"])
-  title_future --- nginx2
-
   nginx2["🔒 Nginx Docker<br>Port 80/443<br>SSL + 도메인별 프록시"]
 
   subgraph existing["기존 서비스"]
@@ -191,8 +187,6 @@ flowchart TD
   gilmok2 --> shared_db
   kscf2 --> shared_db
   etc2 --> shared_db
-
-  style title_future fill:#f5f3ff,stroke:#7c3aed,color:#000,font-weight:bold
   style nginx2 fill:#dbeafe,stroke:#3b82f6,color:#000
   style existing fill:#ecfdf5,stroke:#10b981,color:#000
   style xe2 fill:#c7d2fe,stroke:#4f46e5,color:#000
