@@ -1406,3 +1406,9 @@ a:hover, a:active, a:focus {
 		clear: both !important;
 	}
 }
+@media all and (max-width: 479px) {
+	/* 최신 게시글 테이블 폭 넘침 방지 (GitHub #41) */
+	.hidden-phone { display: none !important; }
+	.home_list table { width: 100% !important; table-layout: fixed; }
+	.home_list td.title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
