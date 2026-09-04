@@ -239,9 +239,21 @@ while IFS= read -r line; do
     mount=$(echo "$line" | awk '{print $6}')
     
     pct_num=$(echo "$pct" | tr -d '%')
-    if [ "$pct_num" -ge 93 ] 2>/dev/null; then
+
+    # 가용 용량을 GB 단위 숫자로 변환 (G=그대로, M=0, T=*1000)
+    avail_num=$(echo "$avail" | awk '{
+        v = $1
+        if (v ~ /G/) { gsub(/G/, "", v); print int(v) }
+        else if (v ~ /T/) { gsub(/T/, "", v); print int(v) * 1000 }
+        else { print 0 }
+    }')
+
+    # 빨강: 사용률 70% 이상 OR 가용 용량 30G 이하
+    # 주황: 사용률 50% 이상
+    # 녹색: 정상
+    if [ "$pct_num" -ge 70 ] 2>/dev/null || [ "${avail_num:-999}" -le 30 ] 2>/dev/null; then
         val_color="#d32f2f; font-weight:bold;"
-    elif [ "$pct_num" -ge 85 ] 2>/dev/null; then
+    elif [ "$pct_num" -ge 50 ] 2>/dev/null; then
         val_color="#dd6b20; font-weight:bold;"
     else
         val_color="#2d3748;"
@@ -250,7 +262,7 @@ while IFS= read -r line; do
     DISK_PARTITION_ROWS+="<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-bottom:1px solid #edf2f7; padding:6px 0;\">"
     DISK_PARTITION_ROWS+="<tr>"
     DISK_PARTITION_ROWS+="<td align=\"left\" style=\"font-size:13px; color:#4a5568;\">${mount} (${fs})</td>"
-    DISK_PARTITION_ROWS+="<td align=\"right\" style=\"font-size:13px; color:${val_color};\">${used} / ${size} (${pct})</td>"
+    DISK_PARTITION_ROWS+="<td align=\"right\" style=\"font-size:13px; color:${val_color}\">${used} / ${size} (${pct})</td>"
     DISK_PARTITION_ROWS+="</tr>"
     DISK_PARTITION_ROWS+="</table>"
 done < <(df -h | grep -E '^/dev/')
