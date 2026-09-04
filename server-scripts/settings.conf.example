@@ -1,0 +1,26 @@
+# =============================================================================
+# Hyanglin Church Server Report & Monitoring Settings
+# =============================================================================
+ADMIN_EMAIL="williamc@dplus.jeju.kr"
+ADMIN_EMAIL_CC="extralee@gmail.com"
+
+# SMTP Settings (Gmail SSL on port 465)
+SMTP_SERVER="smtp.gmail.com"
+SMTP_PORT="465"
+SMTP_USERNAME="williamc@dplus.jeju.kr"
+SMTP_PASSWORD="YOUR_16_CHAR_APP_PASSWORD"
+
+# Server Host Info
+SERVER_NAME="향린교회 서버 (Hyanglin Gabia Prod)"
+SERVER_IP="45.115.154.229"
+
+# Log & Database paths
+LOG_DIR="/home/wonhyukc/logs"
+METRICS_DB="/home/wonhyukc/logs/system_metrics.db"
+BACKUP_EVENT_LOG="/home/wonhyukc/logs/backup_events.log"
+DISK_EVENT_LOG="/home/wonhyukc/logs/disk_events.log"
+
+# Thresholds
+CPU_ALERT_THRESHOLD="90.0"
+DISK_WARN_THRESHOLD="85"
+DISK_CRIT_THRESHOLD="93"

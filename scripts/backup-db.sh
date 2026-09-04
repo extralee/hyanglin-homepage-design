@@ -16,6 +16,8 @@ BACKUP_DIR="${PROJECT_DIR}/backups/daily"
 LOG_FILE="${PROJECT_DIR}/backups/backup.log"
 RETENTION_DAYS=7
 NOTIFY_EMAIL="williamc@dplus.jeju.kr"
+NOTIFY_EMAIL_CC="extralee@gmail.com"
+BACKUP_EVENT_LOG="/home/wonhyukc/logs/backup_events.log"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 BACKUP_FILE="hyanglin_db_backup_${TIMESTAMP}.sql.gz"
 
@@ -48,12 +50,14 @@ if [ ${DUMP_EXIT} -ne 0 ]; then
     log "❌ 백업 실패: mysqldump 종료 코드 ${DUMP_EXIT}"
     rm -f "${DUMP_TMPFILE}"
     STATUS="FAILURE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | FAILED | full | ${BACKUP_FILE} (exit ${DUMP_EXIT})" >> "${BACKUP_EVENT_LOG}"
     SUBJECT="[향린] ⚠️ DB 백업 실패 - ${TIMESTAMP}"
     BODY="mysqldump 실행에 실패했습니다 (exit: ${DUMP_EXIT}).\n시각: $(date '+%Y-%m-%d %H:%M:%S')\n로그: ${LOG_FILE}"
 elif [ ! -s "${DUMP_TMPFILE}" ]; then
     log "❌ 백업 실패: 덤프 파일이 비어 있습니다."
     rm -f "${DUMP_TMPFILE}"
     STATUS="FAILURE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | FAILED | full | ${BACKUP_FILE} (empty dump)" >> "${BACKUP_EVENT_LOG}"
     SUBJECT="[향린] ⚠️ DB 백업 실패 - ${TIMESTAMP}"
     BODY="mysqldump 출력이 비어 있습니다.\n시각: $(date '+%Y-%m-%d %H:%M:%S')\n로그: ${LOG_FILE}"
 else
@@ -66,6 +70,7 @@ else
         mv "${DUMP_TMPFILE}.gz" "${BACKUP_DIR}/${BACKUP_FILE}"
         FILESIZE=$(du -h "${BACKUP_DIR}/${BACKUP_FILE}" | cut -f1)
         log "✅ 백업 성공: ${BACKUP_FILE} (${FILESIZE})"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | SUCCESS | full | ${BACKUP_FILE} (${FILESIZE})" >> "${BACKUP_EVENT_LOG}"
         STATUS="SUCCESS"
         SUBJECT="[향린] DB 백업 성공 - ${TIMESTAMP}"
         BODY="백업 파일: ${BACKUP_FILE}\n원본 크기: ${DUMP_SIZE} → 압축: ${FILESIZE}\n보존 기간: ${RETENTION_DAYS}일"
@@ -73,6 +78,7 @@ else
         log "❌ 백업 실패: gzip 압축 오류"
         rm -f "${DUMP_TMPFILE}" "${DUMP_TMPFILE}.gz"
         STATUS="FAILURE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | FAILED | full | ${BACKUP_FILE} (gzip error)" >> "${BACKUP_EVENT_LOG}"
         SUBJECT="[향린] ⚠️ DB 백업 실패 - ${TIMESTAMP}"
         BODY="gzip 압축에 실패했습니다.\n시각: $(date '+%Y-%m-%d %H:%M:%S')\n로그: ${LOG_FILE}"
     fi
