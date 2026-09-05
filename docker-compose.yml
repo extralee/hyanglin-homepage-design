@@ -5,7 +5,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - legacy_db_data:/var/lib/mysql
       - ./backups/legacy_db_backup.sql.gz:/docker-entrypoint-initdb.d/legacy_db_backup.sql.gz:ro
