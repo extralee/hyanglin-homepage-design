@@ -2,6 +2,13 @@
 
 이 프로젝트는 향린교회 레거시 웹 서비스 및 홈페이지 데이터 자산화, 서버 마이그레이션(KT 클라우드 → 가비아), 그리고 Docker / HTTPS 보안 통신 환경 구축을 담당하는 저장소입니다.
 
+> [!IMPORTANT]
+> **프로덕션 반영 방식**: 이 저장소에는 자동 배포(CI/CD) 파이프라인이 없습니다.
+> - **Nginx/Docker 설정**: 로컬에서 수정 후 서버에서 `git pull` 또는 수동 복사
+> - **XE 소스(PHP)**: 프로덕션 서버(`/var/www/hyanglin-home-src/src/`)에서 직접 수정 (Git 관리 밖)
+> - **브랜치 정책**: 별도 배포 과정이 없으므로 `main` 브랜치만 사용합니다.
+> - **상세 운영 정보**: [docs/ops-reference.md](docs/ops-reference.md) 참조
+
 ---
 
 ## 🏗️ 서비스 및 시스템 아키텍처 (Architecture)
