@@ -2,12 +2,12 @@
 
 echo "[Harness Check] 검증을 시작합니다..."
 
-# 1. SSOT (1prd.md) 존재 여부 확인
-if [ ! -f "1prd.md" ]; then
-    echo "❌ Error: 1prd.md (SSOT) 파일을 찾을 수 없습니다."
+# 1. SSOT (AGENTS.md / 1prd.md) 존재 여부 확인
+if [ ! -f "AGENTS.md" ] && [ ! -f "1prd.md" ]; then
+    echo "❌ Error: AGENTS.md (SSOT) 파일을 찾을 수 없습니다."
     exit 1
 fi
-echo "✅ 1prd.md 확인 완료."
+echo "✅ SSOT (AGENTS.md) 확인 완료."
 
 # 2. .bin 내 스크립트 문법 검사 (Syntax Check)
 for script in .bin/*.sh; do
