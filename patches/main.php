@@ -216,22 +216,27 @@ $(document).ready(function () {
 });
 </script>
 <script>
-/* iframe 자동 높이 맞춤 (GitHub #41) — 모바일에서만 동작 */
-window.addEventListener("load", function() {
+/* iframe 자동 높이 맞춤 (GitHub #41, #48) — 모바일에서만 동작 */
+function adjustIframeHeight() {
     if (window.innerWidth > 479) return; /* 데스크톱에서는 CSS로 처리 */
     if (window.frameElement) {
         var els = document.querySelectorAll(".main > *");
         var maxBottom = 0;
         for (var i = 0; i < els.length; i++) {
+            if (window.getComputedStyle(els[i]).display === 'none') continue;
             var rect = els[i].getBoundingClientRect();
             var bottom = rect.top + window.scrollY + rect.height;
             if (bottom > maxBottom) maxBottom = bottom;
         }
         if (maxBottom > 100) {
-            window.frameElement.style.height = (maxBottom + 30) + "px";
+            window.frameElement.style.setProperty("height", (maxBottom + 15) + "px", "important");
         }
     }
-});
+}
+window.addEventListener("load", adjustIframeHeight);
+window.addEventListener("resize", adjustIframeHeight);
+document.addEventListener("DOMContentLoaded", adjustIframeHeight);
+setTimeout(adjustIframeHeight, 500);
 </script>
 </body>
 </html>

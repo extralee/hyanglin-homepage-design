@@ -1361,9 +1361,14 @@ a:hover, a:active, a:focus {
 		overflow: hidden;
 	}
 
-	/* (2) iframe: 모바일 1열 배치시 높이 충분히 확보 */
+	/* (2) iframe: 모바일 1열 배치시 JS 자동 조절 허용 및 안전 기본값 (GitHub #48) */
 	iframe#content_iframe {
-		height: 2500px !important;
+		height: 2100px;
+	}
+
+	/* (2-1) 모바일에서 데스크톱용 흰색 스페이서(board.jpg) 숨김 (GitHub #48) */
+	.m_hide {
+		display: none !important;
 	}
 
 	/* (3) home_list: 데스크톱용 음수 마진, 고정 너비 초기화 */
