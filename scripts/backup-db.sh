@@ -15,6 +15,7 @@ PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BACKUP_DIR="${PROJECT_DIR}/backups/daily"
 LOG_FILE="${PROJECT_DIR}/backups/backup.log"
 RETENTION_DAYS=7
+ENABLE_EMAIL_NOTIFICATION=false # 다른 알림 시스템 사용으로 기본 비활성화 (필요 시 true로 변경)
 NOTIFY_EMAIL="williamc@dplus.jeju.kr"
 NOTIFY_EMAIL_CC="extralee@gmail.com"
 BACKUP_EVENT_LOG="/home/wonhyukc/logs/backup_events.log"
@@ -97,17 +98,21 @@ BACKUP_TOTAL_SIZE=$(du -sh "${BACKUP_DIR}" 2>/dev/null | cut -f1)
 BODY="${BODY}\n\n현재 백업 현황: ${BACKUP_COUNT}개 파일, 총 ${BACKUP_TOTAL_SIZE}"
 
 # ── 이메일 알림 전송 ──
-MSMTP_BIN=$(command -v msmtp 2>/dev/null || echo "/usr/bin/msmtp")
-MSMTPRC="/home/wonhyukc/.msmtprc"
+if [ "${ENABLE_EMAIL_NOTIFICATION:-false}" = "true" ]; then
+    MSMTP_BIN=$(command -v msmtp 2>/dev/null || echo "/usr/bin/msmtp")
+    MSMTPRC="/home/wonhyukc/.msmtprc"
 
-if [ -x "${MSMTP_BIN}" ] && [ -f "${MSMTPRC}" ]; then
-    printf "Subject: %s\nTo: %s\nFrom: %s\nContent-Type: text/plain; charset=UTF-8\n\n%b" \
-        "${SUBJECT}" "${NOTIFY_EMAIL}" "${NOTIFY_EMAIL}" "${BODY}" \
-        | "${MSMTP_BIN}" -C "${MSMTPRC}" "${NOTIFY_EMAIL}" 2>>"${LOG_FILE}" && \
-        log "📧 알림 이메일 전송 완료 → ${NOTIFY_EMAIL}" || \
-        log "⚠️ 이메일 전송 실패 (msmtp 오류, 로그 확인)"
+    if [ -x "${MSMTP_BIN}" ] && [ -f "${MSMTPRC}" ]; then
+        printf "Subject: %s\nTo: %s\nFrom: %s\nContent-Type: text/plain; charset=UTF-8\n\n%b" \
+            "${SUBJECT}" "${NOTIFY_EMAIL}" "${NOTIFY_EMAIL}" "${BODY}" \
+            | "${MSMTP_BIN}" -C "${MSMTPRC}" "${NOTIFY_EMAIL}" 2>>"${LOG_FILE}" && \
+            log "📧 알림 이메일 전송 완료 → ${NOTIFY_EMAIL}" || \
+            log "⚠️ 이메일 전송 실패 (msmtp 오류, 로그 확인)"
+    else
+        log "⚠️ msmtp 미설치 또는 설정 파일 없음 — 이메일 알림 건너뜀"
+    fi
 else
-    log "⚠️ msmtp 미설치 또는 설정 파일 없음 — 이메일 알림 건너뜀"
+    log "ℹ️ 이메일 알림 비활성화됨 (ENABLE_EMAIL_NOTIFICATION=false)"
 fi
 
 log "=== 백업 완료 ==="

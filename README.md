@@ -78,7 +78,7 @@ sudo docker compose up -d
 | **대상** | Docker MySQL 5.7 전체 DB (`--all-databases`) |
 | **저장 위치** | `backups/daily/` (gzip 압축) |
 | **보존 기간** | 7일 (자동 삭제) |
-| **알림** | 성공/실패 이메일 → `williamc@dplus.jeju.kr` |
+| **알림** | 비활성화 (`ENABLE_EMAIL_NOTIFICATION=false`) |
 
 ### 수동 백업 실행
 ```bash
