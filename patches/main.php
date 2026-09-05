@@ -4,7 +4,7 @@ $reg_date=time();
 $today=date("Ymd", $reg_date);
 if(!$connect) $connect=dbConn();
 
-//¼º¼­ÀĞ±â 'º¸°ü¿ë °Ô½ÃÆÇ'¿¡¼­ ¿À´Ã ³¯Â¥º¸´Ù ÀÛÀº ³¯Â¥°¡ ÀÖÀ¸¸é ±×°ÍÀ» 'ÀÌ¹øÁÖ ¼º¼­ÀĞ±â' °Ô½ÃÆÇÀ¸·Î ÀÌµ¿½ÃÅ´
+//ì„±ì„œì½ê¸° 'ë³´ê´€ìš© ê²Œì‹œíŒ'ì—ì„œ ì˜¤ëŠ˜ ë‚ ì§œë³´ë‹¤ ì‘ì€ ë‚ ì§œê°€ ìˆìœ¼ë©´ ê·¸ê²ƒì„ 'ì´ë²ˆì£¼ ì„±ì„œì½ê¸°' ê²Œì‹œíŒìœ¼ë¡œ ì´ë™ì‹œí‚´
 $bible_date=date("Ymd",mktime(0,0,0,substr($today,4,2),substr($today,6,2)+6,substr($today,0,4)));
 $data=mysql_fetch_array(mysql_query("SELECT a.document_srl FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl where a.module_srl=1912 and a.is_notice='N' and b.eid='date' and b.value<=$bible_date"));
 if($data[0]>0){
@@ -46,7 +46,7 @@ while($data=@mysql_fetch_array($result0)) {
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="style.css?<?=$reg_date?>" />
-	<script src="/home/common/js/jquery.min.js"></script>
+	<script src="/common/js/jquery.min.js"></script>
 </head>
 <body>
 <div class="main">
@@ -83,29 +83,29 @@ $pos16="top:74.9%; left:74.9%;";
 	<!--a href="/home/" target="_top"><img src="/images/main2.jpg" class="square_img e_img" /></a-->
 	<div class="square_img e_img">
 		<div style="position:relative;width:100%; height:100%; background-color:#eee">
-			<a href="/home/board_SbYk83" target="_top"><img src="/images/icon3.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos1?>" /></a><!--ÁÖº¸-->
-			<a href="/home/board_cdIM31" target="_top"><img src="/images/icon5.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos2?>" /></a><!--ÇÏ´Ã¶æÆì±â-->
-			<a href="/home/board_HbQf45" target="_top"><img src="/images/icon17.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos3?>" /></a><!--±âµµ-->
-			<a href="/home/board_EkxT26" target="_top"><img src="/images/icon21.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos4?>" /></a><!--¼º¼­¹¬»ó-->
+			<a href="/home/board_SbYk83" target="_top"><img src="/images/icon3.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos1?>" /></a><!--ì£¼ë³´-->
+			<a href="/home/board_cdIM31" target="_top"><img src="/images/icon5.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos2?>" /></a><!--í•˜ëŠ˜ëœ»í´ê¸°-->
+			<a href="/home/board_HbQf45" target="_top"><img src="/images/icon17.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos3?>" /></a><!--ê¸°ë„-->
+			<a href="/home/board_EkxT26" target="_top"><img src="/images/icon21.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos4?>" /></a><!--ì„±ì„œë¬µìƒ-->
 
-			<a href="/home/board_OrAG11" target="_top"><img src="/images/icon22.png" style="width:23%; height:23%; position:absolute; <?=$pos5?>" /></a><!--¶æ ³ª´®-->
-			<a href="/home/b_movie" target="_top"><img src="/images/icon7.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos6?>" /></a><!--µ¿¿µ»ó-->
-			<a href="/home/board_Zujt14" target="_top"><img src="/images/icon9.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos7?>" /></a><!--¾Ù¹ü-->
-			<a href="https://www.youtube.com/channel/UC2rFw5WcFB5vfzXC1WPOsWQ" target="_blank"><img src="/images/icon24.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos8?>" /></a><!--Çâ¸° À¯Æ©ºê-->
+			<a href="/home/board_OrAG11" target="_top"><img src="/images/icon22.png" style="width:23%; height:23%; position:absolute; <?=$pos5?>" /></a><!--ëœ» ë‚˜ëˆ”-->
+			<a href="/home/b_movie" target="_top"><img src="/images/icon7.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos6?>" /></a><!--ë™ì˜ìƒ-->
+			<a href="/home/board_Zujt14" target="_top"><img src="/images/icon9.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos7?>" /></a><!--ì•¨ë²”-->
+			<a href="https://www.youtube.com/channel/UC2rFw5WcFB5vfzXC1WPOsWQ" target="_blank"><img src="/images/icon24.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos8?>" /></a><!--í–¥ë¦° ìœ íŠœë¸Œ-->
 
-			<a href="/home/b_paper/758" target="_top"><img src="/images/icon2.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos9?>" /></a><!--Á¤°ü-->
-			<a href="/home/board_XHld94" target="_top"><img src="/images/icon6.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos10?>" /></a><!--¸ñÈ¸ÀÚ-->
-			<a href="/home/page_QATA26" target="_top"><img src="/images/icon10.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos11?>" /></a><!--±³È¸¼Ò°³-->
-			<a href="/home/index.php?mid=b_church&category=649" target="_top"><img src="/images/icon20.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos12?>" /></a><!--±³À°ºÎ-->
+			<a href="/home/b_paper/758" target="_top"><img src="/images/icon2.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos9?>" /></a><!--ì •ê´€-->
+			<a href="/home/board_XHld94" target="_top"><img src="/images/icon6.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos10?>" /></a><!--ëª©íšŒì-->
+			<a href="/home/page_QATA26" target="_top"><img src="/images/icon10.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos11?>" /></a><!--êµíšŒì†Œê°œ-->
+			<a href="/home/index.php?mid=b_church&category=649" target="_top"><img src="/images/icon20.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos12?>" /></a><!--êµìœ¡ë¶€-->
 
-			<!--img src="/images/icon99.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute;<?=$pos11?>" /></a--><!--È­»ìÇ¥-->
-			<!--a href="/home/b_notice/761" target="_top"><img src="/images/icon8.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute;<?=$pos12?>" /></a--><!--»õÈ¨ÆäÀÌÁö ¾È³»-->
-			<!--a href="/home/b_church" target="_top"><img src="/images/icon14.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos14?>" /></a--><!--¿î¿µ/Á¶Á÷-->
+			<!--img src="/images/icon99.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute;<?=$pos11?>" /></a--><!--í™”ì‚´í‘œ-->
+			<!--a href="/home/b_notice/761" target="_top"><img src="/images/icon8.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute;<?=$pos12?>" /></a--><!--ìƒˆí™ˆí˜ì´ì§€ ì•ˆë‚´-->
+			<!--a href="/home/b_church" target="_top"><img src="/images/icon14.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos14?>" /></a--><!--ìš´ì˜/ì¡°ì§-->
 
-			<a href="/home/board_LJBs67" target="_top"><img src="/images/icon23.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos13?>" /></a><!--¾ğ·Ğ¿¡ ºñÄ£ Çâ¸°-->
-			<a href="http://www.ahn-library.org/" target="_blank"><img src="/images/icon11.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos14?>" /></a><!--¾Èº´¹«µµ¼­°ü-->
-			<a href="http://www.gilmok.org/new/" target="_blank"><img src="/images/icon4.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos15?>" /></a><!--±æ¸ñ-->
-			<a href="https://www.youtube.com/channel/UCvtcwAc7Fcla1EFykQfuuUA" target="_blank"><img src="/images/icon25.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos16?>" /></a><!--Ä¸»çÀÌ½ÅÇĞ-->
+			<a href="/home/board_LJBs67" target="_top"><img src="/images/icon23.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos13?>" /></a><!--ì–¸ë¡ ì— ë¹„ì¹œ í–¥ë¦°-->
+			<a href="http://www.ahn-library.org/" target="_blank"><img src="/images/icon11.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos14?>" /></a><!--ì•ˆë³‘ë¬´ë„ì„œê´€-->
+			<a href="http://www.gilmok.org/new/" target="_blank"><img src="/images/icon4.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos15?>" /></a><!--ê¸¸ëª©-->
+			<a href="https://www.youtube.com/channel/UCvtcwAc7Fcla1EFykQfuuUA" target="_blank"><img src="/images/icon25.png?<?=$reg_date?>" style="width:23%; height:23%; position:absolute; <?=$pos16?>" /></a><!--ìº¡ì‚¬ì´ì‹ í•™-->
 		</div>
 	</div>
 	<img src="/images/board.jpg" class="s_img m_hide" />
@@ -154,8 +154,8 @@ $('#content_iframe',parent.document.body).load(function() {
 		var hh=w*5+5*15;
 		$(this).parent().parent().height(hh);
 		$(this).height(hh);
-		$('#main_pic').height(w); //ºÒ¾î¿Â ÀÌ¹ÌÁöÀÇ ¼¼·Î »çÀÌÁî¸¦ °¡·Î¿Í µ¿ÀÏÇÏ°Ô... Á¤»ç°¢ÇüÀÌ¹Ç·Î
-		$('#end_pic').height(w); //ºÒ¾î¿Â ÀÌ¹ÌÁöÀÇ ¼¼·Î »çÀÌÁî¸¦ °¡·Î¿Í µ¿ÀÏÇÏ°Ô... Á¤»ç°¢ÇüÀÌ¹Ç·Î
+		$('#main_pic').height(w); //ë¶ˆì–´ì˜¨ ì´ë¯¸ì§€ì˜ ì„¸ë¡œ ì‚¬ì´ì¦ˆë¥¼ ê°€ë¡œì™€ ë™ì¼í•˜ê²Œ... ì •ì‚¬ê°í˜•ì´ë¯€ë¡œ
+		$('#end_pic').height(w); //ë¶ˆì–´ì˜¨ ì´ë¯¸ì§€ì˜ ì„¸ë¡œ ì‚¬ì´ì¦ˆë¥¼ ê°€ë¡œì™€ ë™ì¼í•˜ê²Œ... ì •ì‚¬ê°í˜•ì´ë¯€ë¡œ
 		$('#card_box1').height(w);
 		$('#card_box2').height(w);
 		$('.square_img').height(w);
@@ -216,8 +216,9 @@ $(document).ready(function () {
 });
 </script>
 <script>
-/* iframe ìë™ ë†’ì´ ë§ì¶¤ (GitHub #41) */
+/* iframe ìë™ ë†’ì´ ë§ì¶¤ (GitHub #41) â€” ëª¨ë°”ì¼ì—ì„œë§Œ ë™ì‘ */
 window.addEventListener("load", function() {
+    if (window.innerWidth > 479) return; /* ë°ìŠ¤í¬í†±ì—ì„œëŠ” CSSë¡œ ì²˜ë¦¬ */
     if (window.frameElement) {
         var els = document.querySelectorAll(".main > *");
         var maxBottom = 0;

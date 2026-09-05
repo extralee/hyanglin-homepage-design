@@ -1412,3 +1412,19 @@ a:hover, a:active, a:focus {
 	.home_list table { width: 100% !important; table-layout: fixed; }
 	.home_list td.title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ===== 데스크톱(480px 이상) 메인 페이지 높이 및 최신글 위치 정상화 (GitHub #47) ===== */
+@media all and (min-width: 480px) {
+	/* (1) 래퍼 및 iframe 높이를 실제 2행 크기인 810px로 고정 (하단 405px 여백 제거) */
+	.xe_content.xe-widget-wrapper {
+		height: 810px !important;
+	}
+	iframe#content_iframe {
+		height: 810px !important;
+	}
+
+	/* (2) home_list의 중복 음수 마진 초기화 (sk5_content.css의 top: -405px만으로 2행 안착) */
+	.home_list {
+		margin-top: 0px !important;
+	}
+}
