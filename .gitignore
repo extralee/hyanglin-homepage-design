@@ -6,6 +6,5 @@ node_modules/
 venv/
 *.jsonl
 tmp/
-comment_temp.md
 server-scripts/settings.conf
 *.conf

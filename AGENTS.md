@@ -86,3 +86,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## 5. 운영 레퍼런스
 
 - 서버 아키텍처, Docker 컨테이너 맵, 볼륨 마운트, 설정 파일 위치, 장애 조사 체크리스트 등 상세 운영 정보는 [docs/ops-reference.md](docs/ops-reference.md)를 참조한다.
+
+## 6. 임시 파일 규칙
+
+- 모든 임시 파일(편집용 복사본, 스크래치, 테스트 파일, 이슈 본문 등)은 반드시 `tmp/` 폴더에 생성한다.
+- 프로젝트 루트나 다른 디렉터리에 직접 임시 파일을 만들지 않는다.
+- `tmp/`는 `.gitignore`에 등록되어 있으므로 커밋 대상에서 자동 제외된다.
