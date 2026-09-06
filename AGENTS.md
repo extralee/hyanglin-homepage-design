@@ -9,6 +9,7 @@
 | `migration-verification-expert` | 이전(Migration) 작업 시 스크린샷 등 표면적인 결과에 의존하지 않고, 실제 서버 환경을 기반으로 철저하게 검증(채점)하는 전문가 스킬 | 자동 로딩 |
 | `prod-server-guard` | 향린 가비아 프로덕션 서버(45.115.154.229, sshy) 접속, SSH/SCP, Docker, 파일 편집 및 배포 전 경고 배너 표시 및 확인 스킬 | 자동 로딩 |
 | `darkmode` | 웹 애플리케이션 및 CSS 개발 시 다크 모드(Dark Mode) 테마 시스템 구축, 다크 모드 고대비 가독성 보장(Contrast Invariance), localStorage 연동 수칙 스킬 | 자동 로딩 |
+| `health-check` | 프로덕션 서버(www.hyanglin.org)의 홈페이지, 출석체크, SSL, 디스크, Docker 상태를 자동 검증하고 PASS/FAIL/WARN 리포트를 출력하는 헬스 체크 스킬 | 자동 로딩 |
 <!-- END:skills-inventory -->
 
 <!-- BEGIN:nextjs-agent-rules -->
