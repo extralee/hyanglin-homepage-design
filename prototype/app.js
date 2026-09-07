@@ -2,7 +2,115 @@
  * HYANGLIN CHURCH MODERN MAIN PAGE PROTOTYPE INTERACTION SCRIPT
  */
 
+const addDays = (date, days) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+};
+
+const calculateEasterSunday = (year) => {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+};
+
+const calculateLiturgicalSeason = (today = new Date()) => {
+    const year = today.getFullYear();
+    const easterSunday = calculateEasterSunday(year);
+    const ashWednesday = addDays(easterSunday, -46);
+    const palmSunday = addDays(easterSunday, -7);
+    const pentecostSunday = addDays(easterSunday, 49);
+    const christmasDay = new Date(year, 11, 25);
+    const adventStart = new Date(year, 10, 25);
+
+    while (adventStart.getDay() !== 0) {
+        adventStart.setDate(adventStart.getDate() - 1);
+    }
+    adventStart.setDate(adventStart.getDate() - 21);
+
+    const trinitySunday = addDays(pentecostSunday, 7);
+    const epiphany = new Date(year, 0, 6);
+
+    if (today >= palmSunday && today < easterSunday) return 'red';
+    if (today >= pentecostSunday && today < addDays(pentecostSunday, 1)) return 'red';
+    if (today >= easterSunday && today < pentecostSunday) return 'white';
+    if (today >= ashWednesday && today < easterSunday) return 'purple';
+    if (today >= adventStart && today < christmasDay) return 'purple';
+    if (today >= christmasDay && today <= addDays(christmasDay, 12)) return 'white';
+    if (today >= epiphany && today < ashWednesday) return 'green';
+    if (today >= trinitySunday && today < adventStart) return 'green';
+
+    return 'green';
+};
+
+const LITURGICAL_META = {
+    purple: { label: '대림절 / 사순절', icon: '✦', note: '기다림과 참회' },
+    white: { label: '성탄절 / 부활절', icon: '✧', note: '기쁨과 빛' },
+    green: { label: '주현절 / 창조절 / 평상주일', icon: '❀', note: '생명과 성장' },
+    red: { label: '종려주일 / 성령강림절', icon: '✹', note: '성령과 증언' },
+    black: { label: '감람절 / 장례절기', icon: '✧', note: '묵상과 고요' }
+};
+
+const HERO_IMAGES = ['main-image-1.jpg', 'main-image-2.jpg', 'main-image-3.jpg', 'main-image-4.jpg', 'main-image-5.jpg', 'main-image-6.jpg', 'main-image-7.jpg'];
+
+const pickRandomHeroImage = () => {
+    const randomIndex = Math.floor(Math.random() * HERO_IMAGES.length);
+    return `url("images/${HERO_IMAGES[randomIndex]}")`;
+};
+
+const applyHeroImage = () => {
+    const heroImage = pickRandomHeroImage();
+    document.documentElement.style.setProperty('--hero-image-url', heroImage);
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+        heroSection.style.setProperty('--hero-image-url', heroImage);
+    }
+};
+
+const applyLiturgicalTheme = (forcedSeason = null) => {
+    const season = forcedSeason || calculateLiturgicalSeason();
+    document.documentElement.setAttribute('data-season', season);
+    document.documentElement.style.setProperty('--theme-season', `'${season}'`);
+
+    const label = document.getElementById('liturgicalSeasonText');
+    const icon = document.getElementById('liturgicalSeasonIcon');
+    if (label) {
+        label.textContent = `${LITURGICAL_META[season].label || '평상주일'} · ${new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}`;
+    }
+    if (icon) {
+        icon.textContent = LITURGICAL_META[season].icon || '❀';
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+    applyHeroImage();
+
+    const seasonSelector = document.getElementById('seasonSelector');
+    applyLiturgicalTheme();
+
+    if (seasonSelector) {
+        seasonSelector.addEventListener('change', (event) => {
+            const value = event.target.value;
+            if (value === 'auto') {
+                applyLiturgicalTheme();
+                return;
+            }
+            applyLiturgicalTheme(value);
+        });
+    }
+
     // 1. Mobile Drawer Navigation Toggle
     const mobileToggle = document.getElementById('mobileToggle');
     const drawerClose = document.getElementById('drawerClose');
@@ -67,46 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. Dark Mode Theme Switching System
-    const themeToggle = document.getElementById('themeToggle');
-    const drawerThemeToggle = document.getElementById('drawerThemeToggle');
-    const savedTheme = localStorage.getItem('hyanglin-theme');
-
-    const updateThemeIcon = (theme) => {
-        const isDark = theme === 'dark';
-        const iconClass = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        
-        [themeToggle, drawerThemeToggle].forEach(btn => {
-            if (btn) {
-                const icon = btn.querySelector('i');
-                if (icon) icon.className = iconClass;
-            }
-        });
-    };
-
-    const setTheme = (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('hyanglin-theme', theme);
-        updateThemeIcon(theme);
-    };
-
-    // Apply saved theme or system preference
-    if (savedTheme) {
-        setTheme(savedTheme);
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-    }
-
-    const toggleTheme = () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-    };
-
-    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
-    if (drawerThemeToggle) drawerThemeToggle.addEventListener('click', toggleTheme);
-
-    // 5. Mobile Bottom Bar "전체메뉴" Button Handler
+    // 4. Mobile Bottom Bar "전체메뉴" Button Handler
     const bottomMenuToggle = document.getElementById('bottomMenuToggle');
     if (bottomMenuToggle && mobileDrawer) {
         bottomMenuToggle.addEventListener('click', () => {
