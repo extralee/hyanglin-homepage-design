@@ -1073,6 +1073,11 @@ ul {
     margin-bottom: 10px;
 }
 
+.prayer-header {
+    position: relative;
+    min-height: 28px;
+}
+
 .card-category {
     font-size: 13px;
     font-weight: 700;
@@ -1080,6 +1085,23 @@ ul {
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.card-category-prayer {
+    margin-bottom: 10px;
+}
+
+.prayer-card-icon {
+    position: absolute;
+    top:-30px;
+    right:-14px;
+    width: 112px;
+    height: 112px;
+    object-fit: contain;
+    display: block;
+    margin-left: auto;
+    opacity: 0.9;
+    filter: drop-shadow(0 2px 6px rgba(29, 78, 137, 0.15));
 }
 
 .card-date {
@@ -1564,32 +1586,6 @@ ul {
     color: var(--accent);
 }
 
-/* Theme Toggle Button */
-.theme-toggle-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-color);
-    background-color: var(--surface);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-[data-theme="dark"] .theme-toggle-btn {
-    color: var(--accent);
-    background-color: var(--surface-alt);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.theme-toggle-btn:hover {
-    transform: rotate(15deg) scale(1.05);
-    border-color: var(--primary);
-}
 
 .drawer-actions {
     display: flex;
@@ -1637,124 +1633,6 @@ ul {
 
 .bottom-nav-item.active, .bottom-nav-item:hover {
     color: var(--primary);
-}
-
-[data-theme="dark"] .bottom-nav-item.active, 
-[data-theme="dark"] .bottom-nav-item:hover {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .site-header {
-    background-color: rgba(22, 37, 58, 0.94);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .church-name {
-    color: #FFFFFF;
-}
-
-[data-theme="dark"] .gnb-link {
-    color: var(--text-main);
-}
-
-[data-theme="dark"] .gnb-item:hover .gnb-link {
-    color: var(--accent);
-    background-color: var(--surface-alt);
-}
-
-[data-theme="dark"] .dropdown-info h4 {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .l2-menu-list a {
-    color: var(--text-main);
-}
-
-[data-theme="dark"] .l2-menu-list a:hover {
-    background-color: rgba(233, 196, 106, 0.12);
-    color: var(--accent);
-}
-
-[data-theme="dark"] .mobile-drawer {
-    background-color: var(--surface);
-}
-
-[data-theme="dark"] .accordion-btn {
-    color: var(--text-main);
-}
-
-/* Dark Mode Typography & Contrast Enhancements */
-[data-theme="dark"] .section-title {
-    color: #FFFFFF !important;
-}
-
-[data-theme="dark"] .section-subtitle {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .card-category {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .card-body h3,
-[data-theme="dark"] .news-info h4,
-[data-theme="dark"] .small-card-content h4,
-[data-theme="dark"] .timeline-card h3 {
-    color: var(--text-main);
-}
-
-[data-theme="dark"] .media-link,
-[data-theme="dark"] .btn-text-link {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .prayer-quote {
-    color: #E2E8F0;
-    border-left-color: var(--accent);
-}
-
-[data-theme="dark"] .bg-green {
-    background-color: rgba(233, 196, 106, 0.15);
-    color: var(--accent);
-}
-
-[data-theme="dark"] .bg-amber {
-    background-color: rgba(233, 196, 106, 0.25);
-    color: #F3D079;
-}
-
-[data-theme="dark"] .bg-sand {
-    background-color: rgba(212, 163, 115, 0.25);
-    color: #E0B58B;
-}
-
-[data-theme="dark"] .timeline-card {
-    background-color: var(--surface);
-    border-top-color: var(--border-color);
-}
-
-[data-theme="dark"] .timeline-card.highlight {
-    background-color: #1F2E29;
-    border-top-color: var(--accent);
-}
-
-[data-theme="dark"] .tab-btn {
-    background-color: var(--surface);
-    color: var(--text-muted);
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .tab-btn.active,
-[data-theme="dark"] .tab-btn:hover {
-    background-color: var(--accent);
-    color: var(--primary);
-    border-color: var(--accent);
-}
-
-[data-theme="dark"] .btn-download {
-    background-color: var(--accent);
-    color: var(--primary);
-    font-weight: 700;
 }
 
 /* RESPONSIVE MEDIA QUERIES */
