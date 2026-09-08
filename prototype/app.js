@@ -65,18 +65,49 @@ const LITURGICAL_META = {
 
 const HERO_IMAGES = ['main-image-1.jpg', 'main-image-2.jpg', 'main-image-3.jpg', 'main-image-4.jpg', 'main-image-5.jpg', 'main-image-6.jpg', 'main-image-7.jpg'];
 
+let heroImageIndex = -1;
+
+const getHeroImageUrl = (index) => `url("images/${HERO_IMAGES[index]}")`;
+
 const pickRandomHeroImage = () => {
     const randomIndex = Math.floor(Math.random() * HERO_IMAGES.length);
-    return `url("images/${HERO_IMAGES[randomIndex]}")`;
+    heroImageIndex = randomIndex;
+    return randomIndex;
 };
 
-const applyHeroImage = () => {
-    const heroImage = pickRandomHeroImage();
+const applyHeroImage = (nextIndex = heroImageIndex) => {
+    const safeIndex = Number.isInteger(nextIndex) ? nextIndex : Math.floor(Math.random() * HERO_IMAGES.length);
+    const normalizedIndex = (safeIndex + HERO_IMAGES.length) % HERO_IMAGES.length;
+    heroImageIndex = normalizedIndex;
+
+    const heroImage = getHeroImageUrl(normalizedIndex);
     document.documentElement.style.setProperty('--hero-image-url', heroImage);
     const heroSection = document.querySelector('.hero-section');
     if (heroSection) {
         heroSection.style.setProperty('--hero-image-url', heroImage);
     }
+};
+
+const showHeroImage = (direction = 1) => {
+    const nextIndex = heroImageIndex >= 0 ? heroImageIndex + direction : pickRandomHeroImage();
+    applyHeroImage(nextIndex);
+};
+
+const isSundayWorshipLive = () => {
+    // TEST MODE: 항상 LIVE 상태로 노출
+    return true;
+};
+
+const updateLiveWorshipState = () => {
+    const heroCard = document.querySelector('.hero-worship-card');
+    if (!heroCard) return;
+
+    if (isSundayWorshipLive()) {
+        heroCard.classList.add('is-live');
+        return;
+    }
+
+    heroCard.classList.remove('is-live');
 };
 
 const applyLiturgicalTheme = (forcedSeason = null) => {
@@ -95,7 +126,19 @@ const applyLiturgicalTheme = (forcedSeason = null) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyHeroImage();
+    applyHeroImage(pickRandomHeroImage());
+    updateLiveWorshipState();
+
+    const prevButton = document.querySelector('.hero-image-nav-prev');
+    const nextButton = document.querySelector('.hero-image-nav-next');
+
+    if (prevButton) {
+        prevButton.addEventListener('click', () => showHeroImage(-1));
+    }
+
+    if (nextButton) {
+        nextButton.addEventListener('click', () => showHeroImage(1));
+    }
 
     const seasonSelector = document.getElementById('seasonSelector');
     applyLiturgicalTheme();
