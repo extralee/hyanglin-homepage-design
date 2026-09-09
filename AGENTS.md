@@ -9,7 +9,17 @@
 | `migration-verification-expert` | 이전(Migration) 작업 시 스크린샷 등 표면적인 결과에 의존하지 않고, 실제 서버 환경을 기반으로 철저하게 검증(채점)하는 전문가 스킬 | 자동 로딩 |
 | `prod-server-guard` | 향린 가비아 프로덕션 서버(45.115.154.229, sshy) 접속, SSH/SCP, Docker, 파일 편집 및 배포 전 경고 배너 표시 및 확인 스킬 | 자동 로딩 |
 | `darkmode` | 웹 애플리케이션 및 CSS 개발 시 다크 모드(Dark Mode) 테마 시스템 구축, 다크 모드 고대비 가독성 보장(Contrast Invariance), localStorage 연동 수칙 스킬 | 자동 로딩 |
+| `browser-sync` | 특정 HTML 파일 열기("열어 줘") 및 프로토타입 실시간 라이브 리로드(Live Reload) 브라우저 싱크 구동 및 제어 | 자동 로딩 |
 <!-- END:skills-inventory -->
+
+<!-- BEGIN:html-browser-sync-trigger -->
+# 🌐 HTML 파일 열기 트리거 지침 (Browser-sync)
+
+사용자가 특정 `.html` 파일(예: `prototype/index.html` 등)을 언급하며 **"열어 줘"**, **"브라우저로 열어 줘"**, **"실행해 줘"**, 또는 **"미리보기"**를 요청할 경우:
+1. `browser-sync` 스킬을 즉시 적용합니다.
+2. `./.agents/skills/browser-sync/scripts/start.sh <대상HTML파일경로>` 명령어를 백그라운드로 실행합니다.
+3. 실행 후 접속 가능한 로컬 URL(예: `http://localhost:3000/...`)과 Live Reload 상태를 사용자에게 안내합니다.
+<!-- END:html-browser-sync-trigger -->
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
