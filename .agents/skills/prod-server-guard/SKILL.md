@@ -20,6 +20,29 @@ AI 에이전트는 프로덕션 서버 명령 실행 시 절대로 접속 정보
   - **메인 홈페이지 - Docker 인프라**: `/var/www/hyanglin-home-infra/` (Nginx 설정: `/var/www/hyanglin-home-infra/nginx/conf.d/default.conf`)
   - **심볼릭 링크**: `~/hyanglin-home-src` → `/var/www/hyanglin-home-src`, `~/hyanglin-home-infra` → `/var/www/hyanglin-home-infra`
   - **재정 관리 시스템 (Host PM2)**: `/var/www/hyanglin-finance/web` (포트 3000)
+- **`/data` 파티션 (별도 ext4 디스크 `/dev/vdb`)**:
+
+  | 경로 | 용도 |
+  |------|------|
+  | `/data/backups/` | DB·테이블 백업 저장소 |
+  | `/data/backups/counter_log_export/` | 레거시 XE 카운터 로그 테이블 CSV 압축 백업 (`hr_counter_log.csv.gz` 약 24MB/215MB, `hr2_counter_log.csv.gz` 약 40MB/403MB) |
+  | `/data/docker/` | Docker 데이터 |
+  | `/data/log/` | 서버 로그 |
+  | `/data/www/` | 웹 서비스 실데이터 (`/var/www/`의 심볼릭 링크 원본) |
+  | `/nas/` | **NAS (NFS 마운트)** — KT 레거시 서버에서 이관한 원본 파일 저장소 (1TB, NFS `10.26.26.4:/data`, 마운트 포인트: `/nas`) |
+
+  - **NAS 하위 구조** (`/nas/`):
+
+    | 경로 | 내용 |
+    |------|------|
+    | `document/` | 레거시 첨부 문서 파일 |
+    | `image/` | 레거시 이미지 파일 (1037개 하위 디렉토리) |
+    | `movie/` | 레거시 동영상 파일 |
+    | `sound/` | 레거시 음성 파일 |
+    | `flash/` | 레거시 플래시 파일 |
+    | `xe-files/` | XE CMS 업로드 파일 |
+    | `logs/` | 레거시 서버 로그 (nginx, munin 등) |
+    | `etc/`, `mail/` | 기타 설정·메일 데이터 |
 
 ### 💡 표준 원격 작업 명령어 예시
 
