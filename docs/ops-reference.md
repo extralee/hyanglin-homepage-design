@@ -1,8 +1,11 @@
 # 🏗️ 가비아 프로덕션 서버 운영 레퍼런스
 
-> [!NOTE]
-> 이 문서는 AI 에이전트와 운영자가 hyanglin-legacy 프로덕션 서버의 장애를 신속하게 조사하고 해결할 수 있도록 작성된 운영 레퍼런스입니다.
-> 최종 업데이트: 2026-09-05
+> [!IMPORTANT]
+> **서버 인프라(디스크·NAS·보안 패치·이력)의 SSOT는 [gabia-server.md](gabia-server.md)입니다.**
+> 디스크 구조, fstab, 커널·패키지 관리, 주요 이력 등은 반드시 그 문서를 먼저 확인하세요.
+> 이 문서는 Docker/Nginx/XE 애플리케이션 계층의 운영 절차에 집중합니다.
+>
+> 최종 업데이트: 2026-09-10
 
 ---
 
@@ -12,8 +15,8 @@
 |---|---|
 | 호스트 IP | `45.115.154.229` (SSH 포트 `2222`) |
 | SSH 명령 | `ssh -p 2222 wonhyukc@45.115.154.229` (별칭: `sshy`) |
-| OS | Ubuntu (가비아 클라우드) |
-| 디스크 | 100GB (`/dev/vda4` → `/`) |
+| OS | Ubuntu 24.04.5 LTS (가비아 클라우드) |
+| 디스크 구조 | vda 100GB (OS) + vdb 300GB (`/data`) + NAS 1TB (`/nas`) → [gabia-server.md](gabia-server.md) 참조 |
 
 ---
 
@@ -146,11 +149,14 @@ XE 레이아웃 (xe_kimtajo_layout)
 
 ### 디스크 용량 부족
 
-1. 전체 디스크 확인:
+> [!NOTE]
+> 서버는 vda(OS) + vdb(`/data`) + NAS(`/nas`) 3중 구조입니다. 자세한 디스크 맵은 [gabia-server.md](gabia-server.md)를 확인하세요.
+
+1. 전체 디스크 확인 (vdb/NAS 포함):
    ```bash
-   df -h /
+   df -h --include-type=ext4 --include-type=nfs
    ```
-2. Docker 용량:
+2. Docker 용량 (`/data/docker` = `/var/lib/docker` 심볼릭 링크):
    ```bash
    sudo docker system df
    ```
@@ -158,9 +164,9 @@ XE 레이아웃 (xe_kimtajo_layout)
    ```sql
    SHOW BINARY LOGS
    ```
-4. 큰 디렉토리 확인:
+4. 큰 디렉터리 확인 (`/var/www`는 `/data/www` 심볼릭 링크):
    ```bash
-   du -sh /var/www/* /var/lib/docker/* 2>/dev/null | sort -rh | head -10
+   du -sh /data/* /var/lib/docker/* 2>/dev/null | sort -rh | head -10
    ```
 
 ### 메인 페이지 레이아웃 깨짐
@@ -197,10 +203,14 @@ XE 레이아웃 (xe_kimtajo_layout)
 
 ## 10. 최근 인시던트 이력
 
+> [!NOTE]
+> 서버 인프라 레벨 이력(디스크 확장, NAS 이전, 커널 정리 등)은 [gabia-server.md](gabia-server.md) 참조.
+> 여기에는 XE 애플리케이션 계층 인시던트만 기록합니다.
+
 | 날짜 | 인시던트 | 원인 | 조치 | 이슈 |
 |---|---|---|---|---|
-| 2026-09-04 | 디스크 100% 고갈 | 해외 봇 40만 건 공격 → MySQL binlog 26GB 폭증 | binlog 정리, IP 차단, binlog 만료 3일 단축 | #46 |
-| 2026-09-05 AM | 이미지 깨짐 + 글쓰기 폼 소실 | 봇 대응 과정에서 Nginx rate limiting 과도 적용 | rate limiting 제거 | #44 |
+| 2026-09-04 | 디스크 100% → 서비스 중단 | 해외 봇 40만 건 공격 → MySQL binlog 26GB 폭증 | binlog 정리, IP 차단, 만료일 3일 단축 | [#46](https://github.com/wonhyukc/hyanglin-legacy/issues/46) |
+| 2026-09-05 AM | 이미지 깨짐 + 글쓰기 폼 소실 | 봇 대응 과정 Nginx rate limiting 과도 적용 | rate limiting 제거 | #44 |
 | 2026-09-05 | 로그인 세션 짧아짐 | `use_db_session=N` → PHP 파일 세션(24분) 폴백 | `use_db_session=Y`로 변경 | #45 |
 | 2026-09-05 | 메인 페이지 하단 빈 공간 | #41 iframe 높이 JS가 기존 로직과 충돌 | #41 JS에 모바일 조건 추가 | #47 |
 
@@ -212,12 +222,13 @@ XE 레이아웃 (xe_kimtajo_layout)
 > 아래 사항을 반드시 숙지하고 작업하세요. 이 항목들은 과거 인시던트에서 반복적으로 발생한 실수들입니다.
 
 1. **포트 혼동 금지**: `8080`(메인 홈페이지) ≠ `3000`(재정 시스템)
-2. **파일 위치**: 소스 코드는 호스트 `/var/www/hyanglin-home-src/src/`에 있음 (바인드 마운트)
+2. **파일 위치**: 소스 코드는 `/var/www/hyanglin-home-src/src/` (실체는 `/data/www/hyanglin-home-src/src/`, 심볼릭 링크)
 3. **MySQL 접근**: 컨테이너 내 `mysql` CLI 안 됨 → PHP PDO 사용
 4. **최근 변경 파일 찾기**:
    ```bash
-   find /var/www/hyanglin-home-src/src -not -path '*/cache/*' -not -path '*/files/*' -printf '%T@ %Tc %p\n' | sort -rn | head
+   find /data/www/hyanglin-home-src/src -not -path '*/cache/*' -not -path '*/files/*' -printf '%T@ %Tc %p\n' | sort -rn | head
    ```
-5. **에이전트 세션 이력 찾기**: `/home/hyuk/.gemini/antigravity-cli/brain/*/` 디렉토리에서 `transcript.jsonl` 검색
+5. **에이전트 세션 이력 찾기**: `/home/hyuk/.gemini/antigravity-cli/brain/*/` 디렉터리에서 `transcript.jsonl` 검색
 6. **Nginx 설정 변경 시 반드시 테스트**: `nginx -t` 먼저 실행 후 `nginx -s reload`
 7. **rate limiting 적용 금지**: 메인 페이지는 한 번에 50개 이상의 리소스를 동시 로드하므로 일반적인 rate limiting은 정상 사용자도 차단함
+8. **디스크 경로 주의**: `/var/www`, `/var/lib/docker`, `/var/log`는 모두 `/data/` 하위로 심볼릭 링크됨 — 용량 확인 시 `/data`를 기준으로 볼 것
