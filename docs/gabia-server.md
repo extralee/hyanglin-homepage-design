@@ -1,0 +1,1 @@
+/home/hyuk/prj/hyanglin/hyanglin-26/docs/gabia-server.md
