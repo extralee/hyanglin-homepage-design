@@ -91,3 +91,32 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
   # HARNESS-ALLOW-EOL: mysql5.5
   image: mysql:5.5
   ```
+
+---
+
+### 8. ⚠️ rsync 이관 시 반드시 제외할 항목
+
+Node.js 프로젝트가 포함된 디렉터리를 rsync로 이관할 때 다음을 **반드시 제외**한다.
+포함하면 수십만 개의 소파일로 인해 rsync가 수 시간 소요되거나 중단된다.
+
+| 제외 항목 | 이유 | 재생성 방법 |
+|-----------|------|------------|
+| `node_modules/` | 수십만 소파일 → rsync 수 시간 소요 | `pnpm install` / `npm install` |
+| `.next/` | Next.js 빌드 캐시 | `next build` |
+| `*.log` | 불필요한 로그 파일 | — |
+
+**표준 rsync 명령어:**
+```bash
+rsync -a \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  --exclude='*.log' \
+  <source>/ <destination>/
+```
+
+이관 완료 후 서버에서 패키지 재설치:
+```bash
+cd <destination>/web   # 또는 해당 Node.js 프로젝트 경로
+pnpm install           # 또는 npm install
+npm run build          # 필요 시
+```
