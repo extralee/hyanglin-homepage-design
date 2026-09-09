@@ -8,3 +8,8 @@ venv/
 tmp/
 server-scripts/settings.conf
 *.conf
+comment_temp.md
+
+# Temporary / scratch files
+is_admin
+tmp_edit/
