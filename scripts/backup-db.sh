@@ -12,8 +12,8 @@
 # ── 설정 변수 ──
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-BACKUP_DIR="${PROJECT_DIR}/backups/daily"
-LOG_FILE="${PROJECT_DIR}/backups/backup.log"
+BACKUP_DIR="/nas/backups/daily"
+LOG_FILE="/nas/backups/backup.log"
 RETENTION_DAYS=7
 ENABLE_EMAIL_NOTIFICATION=false # 다른 알림 시스템 사용으로 기본 비활성화 (필요 시 true로 변경)
 NOTIFY_EMAIL="williamc@dplus.jeju.kr"
