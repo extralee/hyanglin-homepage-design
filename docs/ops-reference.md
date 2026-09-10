@@ -46,9 +46,35 @@
 
 | 파일 | 호스트 경로 | 용도 |
 |---|---|---|
-| `default.conf` | `/home/wonhyukc/hyanglin-home-infra/nginx/conf.d/default.conf` | 메인 HTTPS 프록시, CSP, sub_filter |
+| `default.conf` | `/home/wonhyukc/hyanglin-home-infra/nginx/conf.d/default.conf` | 메인 HTTPS 프록시, CSP, sub_filter, 로그 포맷 |
 | `blockips.conf` | `/home/wonhyukc/hyanglin-home-infra/nginx/conf.d/blockips.conf` | 악성 IP 차단 목록 |
 | `finance.conf` | `/home/wonhyukc/hyanglin-home-infra/nginx/conf.d/finance.conf` | 재정관리 시스템 프록시 |
+
+**Nginx 로그 파일 위치 (호스트 마운트, `/data/log/nginx/`):**
+
+| 파일 | 내용 |
+|---|---|
+| `/data/log/nginx/access.log` | 전체 접속 로그 (IP, URL, 상태코드, UA, 응답시간) |
+| `/data/log/nginx/error.log` | 에러 및 이상 동작 로그 |
+| `/data/log/nginx/access.log-YYYYMMDD.gz` | 14일치 압축 보관 (logrotate 자동 관리) |
+
+```bash
+# 실시간 접속 로그 확인
+tail -f /data/log/nginx/access.log
+
+# 특정 IP 접속 이력 조회
+grep '1.2.3.4' /data/log/nginx/access.log
+
+# 404/403/500 에러만 필터
+grep ' 40[34] \| 500 ' /data/log/nginx/access.log | tail -30
+
+# 압축된 과거 로그 조회
+zcat /data/log/nginx/access.log-20260910.gz | grep '특정패턴'
+```
+
+> [!NOTE]
+> logrotate 정책: 매일 로테이션, **14일 보존**, 단일 파일 **100MB 초과 시 즉시 로테이션**, gzip 압축.
+> 설정 파일: `/etc/logrotate.d/nginx-docker` (로컬 SSOT: `server-scripts/logrotate-nginx`)
 
 **Nginx 설정 변경 후 적용:**
 
@@ -164,9 +190,11 @@ XE 레이아웃 (xe_kimtajo_layout)
    ```bash
    grep limit_req /home/wonhyukc/hyanglin-home-infra/nginx/conf.d/default.conf
    ```
-2. Nginx 에러 로그:
+2. Nginx 에러 로그 확인:
    ```bash
-   sudo docker logs hyanglin-home-infra-nginx-1 --tail 50
+   tail -50 /data/log/nginx/error.log
+   # 또는 실시간
+   tail -f /data/log/nginx/access.log | grep ' [45][0-9][0-9] '
    ```
 3. HTTP 응답 코드 확인:
    ```bash
