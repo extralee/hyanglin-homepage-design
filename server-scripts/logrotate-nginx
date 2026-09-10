@@ -1,0 +1,28 @@
+# /etc/logrotate.d/nginx-docker
+# 향린교회 Nginx Docker 컨테이너 로그 자동 로테이션
+# 위치: /data/log/nginx/ (host 마운트 볼륨)
+#
+# 정책:
+#   - 매일 자정 로테이션
+#   - 최대 14개 파일 보존 (= 14일치)
+#   - 단일 파일 100MB 초과 시 즉시 로테이션 (maxsize)
+#   - 전체 /data/log/nginx/ 합계 500MB 초과 시 오래된 것부터 삭제 (size 정책은 cron으로)
+#   - gzip 압축 보관
+#   - 로테이션 후 Docker Nginx에 USR1 시그널 → 새 파일에 이어쓰기
+
+/data/log/nginx/*.log {
+    daily
+    rotate 14
+    maxsize 100M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    dateformat -%Y%m%d
+    sharedscripts
+    postrotate
+        # Docker 컨테이너에 USR1 시그널 → 로그 파일 재오픈 (무중단)
+        docker kill --signal=USR1 hyanglin-home-infra-nginx-1 2>/dev/null || true
+    endscript
+}
