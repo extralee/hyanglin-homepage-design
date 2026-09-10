@@ -240,7 +240,13 @@ while IFS= read -r line; do
     
     pct_num=$(echo "$pct" | tr -d '%')
 
-    # 가용 용량을 GB 단위 숫자로 변환 (G=그대로, M=0, T=*1000)
+    # 전체/가용 용량을 GB 단위 숫자로 변환 (G=그대로, M=0, T=*1000)
+    size_num=$(echo "$size" | awk '{
+        v = $1
+        if (v ~ /G/) { gsub(/G/, "", v); print int(v) }
+        else if (v ~ /T/) { gsub(/T/, "", v); print int(v) * 1000 }
+        else { print 0 }
+    }')
     avail_num=$(echo "$avail" | awk '{
         v = $1
         if (v ~ /G/) { gsub(/G/, "", v); print int(v) }
@@ -248,15 +254,23 @@ while IFS= read -r line; do
         else { print 0 }
     }')
 
-    # 빨강: 사용률 70% 이상 OR 가용 용량 30G 이하
-    # 주황: 사용률 50% 이상
-    # 녹색: 정상
-    if [ "$pct_num" -ge 70 ] 2>/dev/null || [ "${avail_num:-999}" -le 30 ] 2>/dev/null; then
-        val_color="#d32f2f; font-weight:bold;"
-    elif [ "$pct_num" -ge 50 ] 2>/dev/null; then
-        val_color="#dd6b20; font-weight:bold;"
-    else
+    # 디스크 색상 판별 기준:
+    # 1. 50% 이하: 정상 (어떤 경우에도 빨간색 금지, /dev/vda2 등 소형 파티션 오경보 방지)
+    # 2. 50% 초과:
+    #    - 소형 파티션 (전체 용량 30G 미만, 예: /dev/vda2 /boot): 50% 넘었을 때만 빨간색
+    #    - 대형 파티션 (전체 용량 30G 이상):
+    #      사용률 70% 이상 OR 가용 용량 30G 이하 -> 빨강
+    #      그 외 50% 초과 -> 주황
+    if [ "$pct_num" -le 50 ] 2>/dev/null; then
         val_color="#2d3748;"
+    else
+        if [ "$size_num" -lt 30 ] 2>/dev/null; then
+            val_color="#d32f2f; font-weight:bold;"
+        elif [ "$pct_num" -ge 70 ] 2>/dev/null || [ "${avail_num:-999}" -le 30 ] 2>/dev/null; then
+            val_color="#d32f2f; font-weight:bold;"
+        else
+            val_color="#dd6b20; font-weight:bold;"
+        fi
     fi
     
     DISK_PARTITION_ROWS+="<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-bottom:1px solid #edf2f7; padding:6px 0;\">"
