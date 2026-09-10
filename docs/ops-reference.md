@@ -83,16 +83,42 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 ## 6. MySQL 접근 방법
 
 > [!WARNING]
-> MySQL 컨테이너에는 직접 `mysql` 명령이 안 될 수 있습니다. **PHP 컨테이너에서 PDO로 접근**하세요.
+> MySQL 컨테이너에 직접 `mysql` 명령은 동작하지 않습니다. **반드시 PHP 컨테이너에서 PDO로 접근**하세요.
+> `charset=utf8` DSN은 한글 테이블명이 깨지는 버그가 있습니다. **`charset=latin1` + `SET NAMES latin1`을 사용**하세요.
 
+**기본 쿼리 패턴 (테이블명 정상 출력):**
 ```bash
 sudo docker exec hyanglin-home-src-web-1 php -r '
-$pdo = new PDO("mysql:host=172.18.0.1;dbname=hr2;charset=utf8", "root", "Jy0320Ks9702!");
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", "Jy0320Ks9702!");
+$pdo->exec("SET NAMES latin1");
 $stmt = $pdo->query("YOUR SQL HERE");
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) { print_r($row); }
 '
 ```
+
+**한글 테이블명을 포함한 information_schema 조회 시 HEX 패턴:**
+```bash
+sudo docker exec hyanglin-home-src-web-1 php -r '
+$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", "Jy0320Ks9702!");
+$pdo->exec("SET NAMES latin1");
+foreach($pdo->query("SELECT HEX(table_name) tn, ROUND((data_length+index_length)/1024/1024,1) mb, table_rows FROM information_schema.tables WHERE table_schema=\"hr2\" ORDER BY (data_length+index_length) DESC LIMIT 15")->fetchAll(PDO::FETCH_NUM) as $r)
+  echo pack("H*",$r[0])."  ".$r[1]." MB  rows=".$r[2]."\n";
+'
+```
+
+**특정 DB 데이터 조회 (dbname 명시):**
+```bash
+sudo docker exec hyanglin-home-src-web-1 php -r '
+$pdo = new PDO("mysql:host=172.18.0.1;dbname=hr2;charset=latin1", "root", "Jy0320Ks9702!");
+$pdo->exec("SET NAMES utf8");
+$stmt = $pdo->query("YOUR SQL HERE");
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) { print_r($row); }
+'
+```
+
+> [!NOTE]
+> `information_schema` 조회 시에는 `charset=latin1` + `SET NAMES latin1` + `HEX()` 패턴을 쓰세요.
+> 실제 DB 데이터(게시글 본문 등) 조회 시에는 `dbname=hr2` + `SET NAMES utf8`을 쓰세요.
 
 ---
 
