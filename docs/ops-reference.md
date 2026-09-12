@@ -100,7 +100,7 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 |---|---|
 | Host | `172.18.0.1` (Docker bridge) |
 | User | `root` |
-| Password | `Jy0320Ks9702!` |
+| Password | KeePass `KT_MYSQL_PW` (Title: `hyanglin-homepage .env.production`) |
 | Database | `hr2` |
 | Table prefix | `xe_` |
 
@@ -115,7 +115,13 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 | 접속 위치 | 접속 방식 | 계정 / 비밀번호 | 대상 호스트 | 비고 |
 |---|---|---|---|---|
 | **호스트 쉘** | `sudo mysql -u root` | `root` (비밀번호 없음) | `localhost` | `auth_socket` 소켓 인증으로 즉시 로그인 |
-| **Docker 컨테이너** (PHP) | PDO / mysqli | `root` / **`Jy0320Ks9702!`** | `172.18.0.1:3306` | Docker bridge 게이트웨이 경유 (`root@172.18.%`) |
+| **Docker 컨테이너** (PHP) | PDO / mysqli | `root` / **KeePass `KT_MYSQL_PW`** | `172.18.0.1:3306` | Docker bridge 게이트웨이 경유 (`root@172.18.%`) |
+
+> [!NOTE]
+> **비밀번호 조회 (KeePassXC)**:
+> ```bash
+> KT_MYSQL_PW=$(secret-tool lookup Title "hyanglin-homepage .env.production" | grep -E '^KT_MYSQL_PW=' | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+> ```
 
 > [!NOTE]
 > 새 레거시 사이트 DB를 추가할 때:
@@ -126,7 +132,9 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 **기본 쿼리 패턴 (테이블명 정상 출력):**
 ```bash
 sudo docker exec hyanglin-home-src-web-1 php -r '
-$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", "Jy0320Ks9702!");
+define("__XE__", true);
+include("/var/www/html/files/config/db.config.php");
+$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", $db_info->master_db["db_password"]);
 $pdo->exec("SET NAMES latin1");
 $stmt = $pdo->query("YOUR SQL HERE");
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) { print_r($row); }
@@ -136,7 +144,9 @@ while($row = $stmt->fetch(PDO::FETCH_ASSOC)) { print_r($row); }
 **한글 테이블명을 포함한 information_schema 조회 시 HEX 패턴:**
 ```bash
 sudo docker exec hyanglin-home-src-web-1 php -r '
-$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", "Jy0320Ks9702!");
+define("__XE__", true);
+include("/var/www/html/files/config/db.config.php");
+$pdo = new PDO("mysql:host=172.18.0.1;charset=latin1", "root", $db_info->master_db["db_password"]);
 $pdo->exec("SET NAMES latin1");
 foreach($pdo->query("SELECT HEX(table_name) tn, ROUND((data_length+index_length)/1024/1024,1) mb, table_rows FROM information_schema.tables WHERE table_schema=\"hr2\" ORDER BY (data_length+index_length) DESC LIMIT 15")->fetchAll(PDO::FETCH_NUM) as $r)
   echo pack("H*",$r[0])."  ".$r[1]." MB  rows=".$r[2]."\n";
@@ -146,7 +156,9 @@ foreach($pdo->query("SELECT HEX(table_name) tn, ROUND((data_length+index_length)
 **특정 DB 데이터 조회 (dbname 명시):**
 ```bash
 sudo docker exec hyanglin-home-src-web-1 php -r '
-$pdo = new PDO("mysql:host=172.18.0.1;dbname=hr2;charset=latin1", "root", "Jy0320Ks9702!");
+define("__XE__", true);
+include("/var/www/html/files/config/db.config.php");
+$pdo = new PDO("mysql:host=172.18.0.1;dbname=hr2;charset=latin1", "root", $db_info->master_db["db_password"]);
 $pdo->exec("SET NAMES utf8");
 $stmt = $pdo->query("YOUR SQL HERE");
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) { print_r($row); }

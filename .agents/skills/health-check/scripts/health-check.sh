@@ -78,8 +78,10 @@ fi
 # 3. 출석체크 — 인증 접근 (200)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 session_key=$($SSH_CMD 'sudo docker exec hyanglin-home-src-web-1 php -r '"'"'
-$c = @mysql_connect("172.18.0.1", "root", "Jy0320Ks9702!");
-@mysql_select_db("hr2", $c);
+define("__XE__", true);
+include("/var/www/html/files/config/db.config.php");
+$c = @mysql_connect($db_info->master_db["db_hostname"], $db_info->master_db["db_userid"], $db_info->master_db["db_password"]);
+@mysql_select_db($db_info->master_db["db_database"], $c);
 $r = @mysql_query("SELECT s.session_key FROM xe_session s JOIN xe_member m ON s.member_srl = m.member_srl WHERE (m.is_admin = \"Y\" OR s.member_srl IN (SELECT member_srl FROM xe_member_group_member WHERE group_srl IN (1,629,630))) AND s.member_srl > 0 ORDER BY s.last_update DESC LIMIT 1", $c);
 $row = @mysql_fetch_assoc($r);
 echo $row ? $row["session_key"] : "";

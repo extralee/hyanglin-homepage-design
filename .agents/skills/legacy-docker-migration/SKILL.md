@@ -180,7 +180,7 @@ zcat ~/{덤프}.sql.gz | sudo mysql -u root {DB명}
 | 접속 위치 | 비밀번호 | 접속 대상 |
 |---|---|---|
 | 호스트 쉘 `sudo mysql -u root` | 비밀번호 없음 (auth_socket) | 로컬 소켓 |
-| PHP 컨테이너 (XE db.config.php) | `Jy0320Ks9702!` (KeePass `KT_MYSQL_PW`) | `172.18.0.1:3306` |
+| PHP 컨테이너 (XE db.config.php) | KeePass `KT_MYSQL_PW` (`hyanglin-homepage .env.production`) | `172.18.0.1:3306` |
 
 #### 다중 사이트 이관: 사이트별 별도 PHP 컨테이너
 
