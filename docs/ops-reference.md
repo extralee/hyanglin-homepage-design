@@ -106,11 +106,22 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 
 ---
 
-## 6. MySQL 접근 방법
+## 6. MySQL 데이터베이스 아키텍처 및 접근 방법 (SSOT)
 
-> [!WARNING]
-> MySQL 컨테이너에 직접 `mysql` 명령은 동작하지 않습니다. **반드시 PHP 컨테이너에서 PDO로 접근**하세요.
-> `charset=utf8` DSN은 한글 테이블명이 깨지는 버그가 있습니다. **`charset=latin1` + `SET NAMES latin1`을 사용**하세요.
+> [!IMPORTANT]
+> **실제 운영 DB는 Docker 컨테이너가 아니라 호스트 머신에 네이티브 서비스로 구동 중인 MySQL 5.7 (포트 3306)입니다.**
+> (Docker Compose의 3307 포트 legacy-mysql 컨테이너는 미사용 컨테이너입니다.)
+
+| 접속 위치 | 접속 방식 | 계정 / 비밀번호 | 대상 호스트 | 비고 |
+|---|---|---|---|---|
+| **호스트 쉘** | `sudo mysql -u root` | `root` (비밀번호 없음) | `localhost` | `auth_socket` 소켓 인증으로 즉시 로그인 |
+| **Docker 컨테이너** (PHP) | PDO / mysqli | `root` / **`Jy0320Ks9702!`** | `172.18.0.1:3306` | Docker bridge 게이트웨이 경유 (`root@172.18.%`) |
+
+> [!NOTE]
+> 새 레거시 사이트 DB를 추가할 때:
+> 1. 호스트에서 `sudo mysql -u root -e "CREATE DATABASE {db_name} CHARACTER SET utf8;"`
+> 2. 호스트에서 `zcat {덤프}.sql.gz | sudo mysql -u root {db_name}`
+> 3. `root@172.18.%`에 전체 권한(`GRANT ALL PRIVILEGES ON *.* TO 'root'@'172.18.%';`)이 부여되어 있으므로 컨테이너에서 즉시 접속 가능합니다.
 
 **기본 쿼리 패턴 (테이블명 정상 출력):**
 ```bash

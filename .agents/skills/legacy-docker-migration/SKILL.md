@@ -120,3 +120,113 @@ cd <destination>/web   # 또는 해당 Node.js 프로젝트 경로
 pnpm install           # 또는 npm install
 npm run build          # 필요 시
 ```
+
+---
+
+### 9. 🚀 KT 레거시 서버 → 가비아 이관 실전 패턴 (2026-09-12 검증)
+
+#### 파일 rsync: Pull 방식 필수
+
+가비아 방화벽이 KT IP(`14.63.198.35`)를 차단하므로 **Push(KT→가비아) 방식은 불가**. 가비아에서 KT로 당기는 **Pull 방식**을 사용한다.
+
+**사전 준비 (최초 1회):**
+```bash
+# 1. 가비아 서버에 임시 키쌍 생성
+ssh -p 2222 wonhyukc@45.115.154.229 "
+  ssh-keygen -t rsa -b 4096 -f /tmp/kt_tmp_key -N '' -q
+  cat /tmp/kt_tmp_key.pub
+"
+
+# 2. 생성된 공개키를 KT 서버 authorized_keys에 등록
+ssh -p 2222 root@14.63.198.35 "
+  echo '<위에서 출력된 공개키>' >> /root/.ssh/authorized_keys
+  # KT 서버 sshd에 공개키 인증 활성화 (CentOS 5.8 필수)
+  echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config
+  echo 'RSAAuthentication yes' >> /etc/ssh/sshd_config
+  service sshd reload
+"
+```
+
+**Pull rsync 실행:**
+```bash
+ssh -p 2222 wonhyukc@45.115.154.229 \
+  "rsync -az \
+  --exclude='home/files/cache/' --exclude='home/files/env/' \
+  -e 'ssh -p 2222 -o StrictHostKeyChecking=no -i /tmp/kt_tmp_key \
+      -o KexAlgorithms=+diffie-hellman-group14-sha1 \
+      -o HostKeyAlgorithms=+ssh-rsa \
+      -o PubkeyAcceptedAlgorithms=+ssh-rsa' \
+  root@14.63.198.35:/home/{사이트}/www/ \
+  /data/www/{사이트}/"
+```
+
+> ⚠️ **SSH 레거시 옵션 3종 세트 필수** (CentOS 5.8 구형 OpenSSH 호환):
+> - `KexAlgorithms=+diffie-hellman-group14-sha1` — 키 교환 알고리즘
+> - `HostKeyAlgorithms=+ssh-rsa` — 호스트 키 알고리즘
+> - `PubkeyAcceptedAlgorithms=+ssh-rsa` — 공개키 서명 알고리즘 (없으면 `no mutual signature algorithm` 오류)
+
+#### DB 임포트: 호스트 네이티브 MySQL(3306) 사용
+
+가비아 서버의 실제 운영 DB는 Docker 컨테이너가 아니라 **호스트 네이티브 MySQL 서비스(포트 3306)**이다.
+
+```bash
+# 호스트 쉘에서 바로 임포트 (비밀번호 불필요, auth_socket)
+sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS {DB명} CHARACTER SET utf8;"
+zcat ~/{덤프}.sql.gz | sudo mysql -u root {DB명}
+
+# 컨테이너(172.18.%) 접근 권한은 이미 *.* 에 열려 있으므로 추가 작업 불필요
+```
+
+| 접속 위치 | 비밀번호 | 접속 대상 |
+|---|---|---|
+| 호스트 쉘 `sudo mysql -u root` | 비밀번호 없음 (auth_socket) | 로컬 소켓 |
+| PHP 컨테이너 (XE db.config.php) | `Jy0320Ks9702!` (KeePass `KT_MYSQL_PW`) | `172.18.0.1:3306` |
+
+#### 다중 사이트 이관: 사이트별 별도 PHP 컨테이너
+
+각 사이트마다 독립적인 PHP 컨테이너를 추가하고 포트를 순차 할당한다.
+
+```yaml
+# /var/www/hyanglin-home-src/docker-compose.yml 에 추가
+services:
+  {사이트명}:
+    build: .
+    ports:
+      - '{포트}:80'  # 8081, 8082, 8083 ...
+    volumes:
+      - /data/www/{사이트명}:/var/www/html
+      - ./php.ini:/usr/local/etc/php/php.ini
+    environment:
+      - TZ=Asia/Seoul
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+```
+
+**포트 할당 현황:**
+| 포트 | 사이트 |
+|---|---|
+| 8080 | hyanglin (메인) |
+| 8081 | ongallery |
+| 8082 | (다음 사이트) |
+
+**Nginx vhost에서 해당 포트로 프록시:**
+```nginx
+# /var/www/hyanglin-home-infra/nginx/conf.d/{사이트}.conf
+location / {
+    proxy_pass http://host.docker.internal:{포트};
+}
+```
+
+#### XE db.config.php 필수 수정 항목
+```bash
+# db_hostname: KT 서버 127.0.0.1 → 가비아 Docker bridge
+sed -i "s/'db_hostname' => 'localhost'/'db_hostname' => '172.18.0.1'/g" db.config.php
+sed -i "s/'db_hostname' => '127.0.0.1'/'db_hostname' => '172.18.0.1'/g" db.config.php
+
+# default_url: http → https
+sed -i "s|'default_url' => 'http://|'default_url' => 'https://|g" db.config.php
+
+# 캐시 삭제 필수
+rm -rf home/files/cache/*
+```
