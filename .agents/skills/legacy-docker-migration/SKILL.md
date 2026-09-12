@@ -230,3 +230,80 @@ sed -i "s|'default_url' => 'http://|'default_url' => 'https://|g" db.config.php
 # 캐시 삭제 필수
 rm -rf home/files/cache/*
 ```
+
+---
+
+### 10. 🛡️ HTTPS 이전 후 이미지 엑박(Mixed Content) 및 SSL 캐시 방지 수칙 (실전 교훈)
+
+HTTPS로 전환할 때 레거시 데이터(DB 본문 및 템플릿)의 `http://` 하드코딩 URL로 인해 최신 브라우저에서 이미지가 차단(엑박)되거나 'Not secure' 경고가 발생하는 문제를 방지하기 위한 표준 수칙이다.
+
+#### ① DB 내부 `http://` ➔ `https://` 일괄 치환 (DNS 변경 전 의무 실행)
+DB 임포트 직후 반드시 본문 테이블(`xe_documents`)의 도메인 URL을 `https://`로 치환한다.
+```bash
+sudo mysql -u root {DB명} -e "
+  UPDATE xe_documents SET content = REPLACE(content, 'http://www.{도메인}', 'https://www.{도메인}') WHERE content LIKE '%http://www.{도메인}%';
+  UPDATE xe_documents SET content = REPLACE(content, 'http://{도메인}', 'https://www.{도메인}') WHERE content LIKE '%http://{도메인}%';
+"
+# XE 템플릿 컴파일 캐시 삭제 (필수)
+sudo rm -rf /data/www/{사이트}/home/files/cache/*
+```
+
+#### ② Nginx vhost 표준 템플릿 (`sub_filter` 기본 탑재)
+혹시 DB에 치환되지 않은 `http://` 링크가 남아있더라도 브라우저로 전송될 때 실시간으로 `https://`로 변환하도록 `sub_filter`를 필수로 구성한다.
+```nginx
+# /var/www/hyanglin-home-infra/nginx/conf.d/{사이트}.conf 예시
+server {
+    listen 80;
+    server_name {도메인} www.{도메인};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name {도메인} www.{도메인};
+
+    ssl_certificate     /etc/letsencrypt/live/{도메인}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{도메인}/privkey.pem;
+
+    client_max_body_size 50M;
+    add_header Content-Security-Policy "upgrade-insecure-requests;";
+    server_tokens off;
+
+    location / {
+        proxy_pass         http://host.docker.internal:{포트};
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+
+        # 혼합 콘텐츠(Mixed Content) 방지 실시간 치환
+        proxy_set_header   Accept-Encoding "";
+        sub_filter "http://www.{도메인}" "https://www.{도메인}";
+        sub_filter "http://{도메인}" "https://www.{도메인}";
+        sub_filter_once off;
+        sub_filter_types text/html text/css text/xml application/javascript;
+    }
+}
+```
+
+#### ③ Certbot 발급 시 `--cert-name` 명시
+임시 더미 인증서 디렉터리와의 충돌(`live directory exists`)을 방지하기 위해 정식 발급 시 항상 `--cert-name`을 명시한다.
+```bash
+sudo docker compose run --rm --entrypoint certbot certbot certonly \
+  --webroot --webroot-path=/var/www/certbot \
+  --cert-name {도메인} \
+  -d {도메인} -d www.{도메인} \
+  --email myLoveSarah@gmail.com --agree-tos --no-eff-email
+```
+
+#### ④ 사용자 검증 안내 수칙 (브라우저 캐시 주의)
+더미 인증서 상태에서 사용자가 브라우저로 접속한 이력이 있다면, 크롬 브라우저가 해당 탭에 '보안 경고'를 캐시해 둔다.
+따라서 정식 SSL 적용 후 사용자에게 검증을 요청할 때는 단순 새로고침이 아니라 **"현재 탭을 닫고 새 탭을 열거나, 시크릿 창(Ctrl+Shift+N)으로 확인"**하도록 반드시 안내한다.
+
