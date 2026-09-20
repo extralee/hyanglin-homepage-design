@@ -69,6 +69,14 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
   }
   ```
 
+### 6-1. 프로덕션 PHP 에러 출력 억제 (`display_errors = Off`)
+- 레거시 PHP 5.x 코드에는 `eregi()`, `split()` 등 Deprecated 함수와 foreach 인수 오류 등 경고가 다수 존재한다. 프로덕션에서 이를 브라우저에 노출하면 보안 위험(경로 노출)과 사용자 경험 저하를 초래한다.
+- 공유 `php.ini`에 반드시 다음을 포함:
+  ```ini
+  display_errors = Off
+  error_reporting = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+  ```
+
 ### 7. XE/CMS 회원 로그인 식별자(Identifier) 사전 판별 규칙
 - **DB `user_id`와 실제 로그인 입력값의 구분**: DB 회원 테이블(`xe_member`)에서 `user_id`가 `t61927`로 확인되더라도, 실제 로그인 창에 입력할 아이디 값이 `user_id`라고 단정 짓지 않는다.
 - **CMS 식별자 정책 사전 검사 의무화**: 계정 조회/안내 시 반드시 XE 회원 모듈 설정(`$oMemberModel->getMemberConfig()->identifier`) 또는 DB `xe_module_config`를 사전 확인한다.
@@ -234,6 +242,21 @@ sed -i "s|'default_url' => 'http://|'default_url' => 'https://|g" db.config.php
 # 캐시 삭제 필수
 rm -rf home/files/cache/*
 ```
+
+#### 다중 PHP 앱의 독립 DB 설정 파일 전수 탐색
+
+레거시 사이트는 하나의 웹 루트 안에 XE(CMS), 제로보드, 자체 제작 PHP 앱 등 **복수의 독립적인 PHP 애플리케이션**이 공존하는 경우가 흔하다.
+각 앱은 자체적인 DB 설정 파일을 보유하며, XE의 `db.config.php`만 수정하면 다른 앱의 DB 접속이 실패한다.
+
+**이관 직후 필수 실행:**
+```bash
+# 웹 루트 전체에서 DB 설정 파일 전수 탐색
+find /data/www/{사이트}/ -name '*.php' -exec grep -l 'mysql_connect\|mysqli_connect\|db_host\|db_password\|PDO.*mysql' {} \;
+# 또는 config라는 이름을 가진 PHP 파일 전수 검색
+find /data/www/{사이트}/ -name '*config*.php' -type f
+```
+
+발견된 모든 설정 파일에서 `localhost` / `127.0.0.1` → `172.18.0.1` (Docker bridge) 변경을 적용해야 한다.
 
 ---
 
