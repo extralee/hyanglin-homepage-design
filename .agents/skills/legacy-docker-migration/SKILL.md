@@ -77,6 +77,16 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
   error_reporting = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
   ```
 
+### 6-2. 레거시 PHP의 비표준 HTTP 헤더로 인한 Apache 500 에러
+- 레거시 PHP 앱의 `lib.php` 등에서 `header("P3P : CP=...")` 처럼 **헤더 이름에 후행 공백**이 포함된 경우, Apache 2.4가 `AH02429: Response header name contains invalid characters` 에러를 발생시키고 응답을 500으로 중단한다.
+- 이관 직후 schedule/contents 등 독립 PHP 앱에서 500이 발생하면, `docker logs`에서 `AH02429` 키워드를 확인하고 해당 PHP 파일의 `header()` 호출에서 헤더 이름 공백을 제거한다:
+  ```php
+  // ❌ 잘못된 예 (Apache 500 유발)
+  @header ("P3P : CP=\"ALL ...\");
+  // ✅ 올바른 예
+  @header("P3P: CP=\"ALL ...\");
+  ```
+
 ### 7. XE/CMS 회원 로그인 식별자(Identifier) 사전 판별 규칙
 - **DB `user_id`와 실제 로그인 입력값의 구분**: DB 회원 테이블(`xe_member`)에서 `user_id`가 `t61927`로 확인되더라도, 실제 로그인 창에 입력할 아이디 값이 `user_id`라고 단정 짓지 않는다.
 - **CMS 식별자 정책 사전 검사 의무화**: 계정 조회/안내 시 반드시 XE 회원 모듈 설정(`$oMemberModel->getMemberConfig()->identifier`) 또는 DB `xe_module_config`를 사전 확인한다.
