@@ -204,11 +204,15 @@ services:
 ```
 
 **포트 할당 현황:**
-| 포트 | 사이트 |
-|---|---|
-| 8080 | hyanglin (메인) |
-| 8081 | ongallery |
-| 8082 | (다음 사이트) |
+| 포트 | 사이트 | 이슈 |
+|---|---|---|
+| 8080 | hyanglin (메인) | — |
+| 8081 | ongallery | #26 |
+| 8082 | parkhk (parkhyungkyu.org) | #58 |
+| 8083 | haerangart (haerangart.com) | #59 |
+| 8084 | educrit (educrit.org) | #60 |
+| 8085 | gilmok (gilmok.org) | #61 |
+| 8086 | simwon (simwon.org) | #62 |
 
 **Nginx vhost에서 해당 포트로 프록시:**
 ```nginx
