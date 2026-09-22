@@ -15,7 +15,7 @@
 | `ahn-library.org` | dnsever OK | 클라우드 DNS | — | → #54 |
 | `b-book.co.kr` | dnsever OK | 클라우드 DNS | — | 이관 대상 외 |
 | `educrit.org` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#60) |
-| `gilmok.org` | dnsever OK | 클라우드 DNS | 길목홈페이지 | 이관 대상 ✅ |
+| `gilmok.org` | dnsever OK | 클라우드 DNS | 길목홈페이지 | 이관 완료 ✅ (#61) |
 | `haerangart.com` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#59) |
 | `hyanglin.org` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ |
 | `ongallery.co.kr` | dnsever OK | 클라우드 DNS | 온갤러리 | 이관 완료 ✅ (#26) |
