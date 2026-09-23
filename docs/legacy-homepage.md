@@ -111,7 +111,7 @@
 | **재미삼아** | `jaemisama` | `/home/jaemisama/` | 재미삼아 (가비아 아카이브 완료) |
 | **cnblaw** | `cnblaw` | `/home/cnblaw/` | 법무법인 cnblaw (가비아 아카이브 완료, #65) |
 | **도서출판b** | `bbook` | `/data/www/bbook/` | 도서출판b (가비아 8089 포트 이전 완료, #66) |
-| **시네마버킷리스트** | `moviediary` | `/data/www/moviediary/` | 시네마버킷리스트 (가비아 8090 포트 이전 완료 / DNS 전환 대기, #63) |
+| **시네마버킷리스트** | `moviediary` | `/data/www/moviediary/` | 시네마버킷리스트 (가비아 8090 포트 이전 완료, #63) |
 
 **이관 절차:**
 1.  **백업**: `mysqldump` 명령어를 사용하여 각 DB별로 SQL 덤프 파일을 생성합니다.

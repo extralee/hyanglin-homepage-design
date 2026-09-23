@@ -27,7 +27,7 @@
 - **DNSEver 미등록 도메인** (별도 관리 필요):
   - `parkhyungkyu.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리
   - `simwon.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리 (이관 완료 ✅ #62)
-  - `cinemabucketlist.com` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리 (가비아 8090 포트 세팅 완료 / DNS 전환 대기 ⏳ #63)
+  - `cinemabucketlist.com` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리 (이관 완료 ✅ #63)
   - `kscf.kr` → NXDOMAIN (아카이브 완료 ✅)
   - `jaemisama.org` → DNSever (clientHold 상태, 아카이브 완료 ✅)
   - `cnblaw.kr` → NXDOMAIN/만료 (아카이브 완료 ✅ #65)
