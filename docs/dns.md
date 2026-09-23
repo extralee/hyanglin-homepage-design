@@ -13,7 +13,7 @@
 | 도메인 | 네임서버 | DNS 서비스 | 메모 | KT→가비아 이관 |
 |---|---|---|---|---|
 | `ahn-library.org` | dnsever OK | 클라우드 DNS | — | → #54 |
-| `b-book.co.kr` | dnsever OK | 클라우드 DNS | 도서출판b | 작업 보류 ⏸️ (#66) |
+| `b-book.co.kr` | dnsever OK | 클라우드 DNS | 도서출판b | 가비아 세팅 완료 (DNS 전환 대기) ⏳ (#66) |
 | `educrit.org` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#60) |
 | `gilmok.org` | dnsever OK | 클라우드 DNS | 길목홈페이지 | 이관 완료 ✅ (#61) |
 | `haerangart.com` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#59) |
