@@ -19,7 +19,7 @@
 | `haerangart.com` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#59) |
 | `hyanglin.org` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ |
 | `ongallery.co.kr` | dnsever OK | 클라우드 DNS | 온갤러리 | 이관 완료 ✅ (#26) |
-| `rorobrain.com` | dnsever OK | 클라우드 DNS | — | 폐기 대상 (서비스 종료) |
+| `rorobrain.com` | dnsever OK | 클라우드 DNS | 로로브레인 | 이관 완료 ✅ (#26) |
 
 ## 핵심 발견사항
 

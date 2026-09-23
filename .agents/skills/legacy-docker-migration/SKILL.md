@@ -232,6 +232,7 @@ services:
 | 8085 | gilmok (gilmok.org) | #61 |
 | 8086 | simwon (simwon.org) | #62 |
 | 8087 | ahn-library (ahn-library.org) | #54 |
+| 8088 | rorobrain (rorobrain.com) | #26 |
 
 **Nginx vhost에서 해당 포트로 프록시:**
 ```nginx
