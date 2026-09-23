@@ -110,7 +110,7 @@
 | **KSCF** | `kscf` | `/home/kscf/` | 한국기독학생회총연맹 (가비아 아카이브 완료) |
 | **재미삼아** | `jaemisama` | `/home/jaemisama/` | 재미삼아 (가비아 아카이브 완료) |
 | **cnblaw** | `cnblaw` | `/home/cnblaw/` | 법무법인 cnblaw (가비아 아카이브 완료, #65) |
-| **도서출판b** | `bbook` | `/data/www/bbook/` | 도서출판b (가비아 8089 포트 이전 / DNS 전환 대기, #66) |
+| **도서출판b** | `bbook` | `/data/www/bbook/` | 도서출판b (가비아 8089 포트 이전 완료, #66) |
 | **시네마버킷리스트** | `moviediary` | `/home/moviediary/` | 시네마버킷리스트 (담당자 확인 대기, #63) |
 
 **이관 절차:**
