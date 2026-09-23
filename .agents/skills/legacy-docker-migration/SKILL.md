@@ -231,6 +231,7 @@ services:
 | 8084 | educrit (educrit.org) | #60 |
 | 8085 | gilmok (gilmok.org) | #61 |
 | 8086 | simwon (simwon.org) | #62 |
+| 8087 | ahn-library (ahn-library.org) | #54 |
 
 **Nginx vhost에서 해당 포트로 프록시:**
 ```nginx
@@ -343,4 +344,21 @@ sudo docker compose run --rm --entrypoint certbot certbot certonly \
 #### ④ 사용자 검증 안내 수칙 (브라우저 캐시 주의)
 더미 인증서 상태에서 사용자가 브라우저로 접속한 이력이 있다면, 크롬 브라우저가 해당 탭에 '보안 경고'를 캐시해 둔다.
 따라서 정식 SSL 적용 후 사용자에게 검증을 요청할 때는 단순 새로고침이 아니라 **"현재 탭을 닫고 새 탭을 열거나, 시크릿 창(Ctrl+Shift+N)으로 확인"**하도록 반드시 안내한다.
+
+---
+
+### 11. 🛡️ Nginx conf.d 파일 알파벳 순서(Include Order) 함정 주의
+- Nginx는 `conf.d/*.conf`를 **알파벳 순**으로 로드한다.
+- `default.conf`에 정의된 커스텀 `log_format`(예: `security`)은 알파벳 순으로 `default.conf`보다 앞서는 파일(`ahn-library.conf` 등)에서 참조할 경우 `unknown log format "security"` 에러를 내며 Nginx 기동이 실패한다.
+- **해결책**:
+  - `default.conf`보다 알파벳 순으로 앞선 사이트 conf는 표준 `combined` 포맷을 사용하거나,
+  - 커스텀 로그 포맷 정의를 `00-log-formats.conf`처럼 가장 먼저 로드되는 파일로 분리한다.
+
+---
+
+### 12. 🛡️ 그누보드4 커스텀 CMS 이관 시 수칙
+- **설정 파일**: XE(`files/config/db.config.php`)와 달리 루트의 `dbconfig.php` 및 보조 솔루션(`reports/config.php` 등)에 DB 정보가 존재함.
+- **CAPTCHA**: 회원가입 시 이미지 생성을 위해 Apache PHP 5.6에 **GD 라이브러리(`freetype`, `jpeg`, `png`)**가 반드시 활성화되어 있어야 함.
+- **디렉터리 권한**: `data/` 및 `upload/` 디렉터리에 `chmod -R 777` 부여 필수.
+
 

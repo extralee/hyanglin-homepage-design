@@ -99,10 +99,11 @@
 | :--- | :--- | :--- | :--- |
 | **현재 홈페이지** | `hr2` | `/home/hr/www/home/` | XE 기반 메인 사이트 |
 | **구 홈페이지** | `hr` | `/home/hr/www/bbs_old/` | 과거 게시판 데이터 |
-| **심원** | `simone` | `/home/simwon/` | 심원 안병무 기념사업회 |
-| **길목** | `gilmok`, `gilmokorg` | `/home/gilmok/` | 길목 웹사이트 |
+| **심원** | `simone` | `/home/simwon/` | 심원 안병무 기념사업회 (가비아 8086 포트 이전 완료) |
+| **안병무도서관** | `library` | `/data/www/ahn-library/` | 안병무도서관 그누보드4+OpenBiblio (가비아 8087 포트 이전 완료) |
+| **길목** | `gilmok`, `gilmokorg` | `/home/gilmok/` | 길목 웹사이트 (가비아 8085 포트 이전 완료) |
 | **KSCF** | `kscf` | `/home/kscf/` (경로 추정) | 한국기독학생회총연맹 |
-| **기타** | `educrit`, `ahn-library` 등 | `/home/[계정명]/` | 새 서버 이전 대상 호스팅 사이트들 |
+| **기타** | `educrit` 등 | `/home/[계정명]/` | 새 서버 이전 대상 호스팅 사이트들 |
 
 **이관 절차:**
 1.  **백업**: `mysqldump` 명령어를 사용하여 각 DB별로 SQL 덤프 파일을 생성합니다.
