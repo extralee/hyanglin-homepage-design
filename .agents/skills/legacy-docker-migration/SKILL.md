@@ -362,4 +362,19 @@ sudo docker compose run --rm --entrypoint certbot certbot certonly \
 - **CAPTCHA**: 회원가입 시 이미지 생성을 위해 Apache PHP 5.6에 **GD 라이브러리(`freetype`, `jpeg`, `png`)**가 반드시 활성화되어 있어야 함.
 - **디렉터리 권한**: `data/` 및 `upload/` 디렉터리에 `chmod -R 777` 부여 필수.
 
+---
+
+### 13. 🚨 MySQL 8.0 `password()` 제거 및 평문 비밀번호 노출 취약점 방지 (필수 패치)
+- **원인**: MySQL 8.0에서는 구형 `password()` 내장 함수가 완전히 제거되어 그누보드4의 `sql_password()` 호출(`SELECT password('$value')`) 시 **1064 Syntax Error**가 발생한다.
+- **치명적 위험**: 그누보드4의 기본 `sql_query()` 에러 핸들러는 쿼리 실패 시 SQL 원본을 `die("<p>$sql<p>...")`로 화면에 출력하므로, **사용자가 입력한 비밀번호 평문이 브라우저에 그대로 노출**되는 심각한 보안 사고가 발생한다.
+- **필수 조치**:
+  1. `lib/common.lib.php` 내 `sql_password()` 함수를 MySQL 4.1+ 해시와 100% 동일한 PHP 네이티브 해시 함수로 대체:
+     ```php
+     function sql_password($value) {
+         return '*' . strtoupper(sha1(sha1($value, true)));
+     }
+     ```
+  2. `lib/common.lib.php` 내 `sql_query()` 에러 핸들러에서 `$sql` 화면 출력을 제거하고, 일반 안내 메시지 및 `error_log` 시스템 로깅으로 전환.
+
+
 
