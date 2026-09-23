@@ -97,13 +97,21 @@
 
 | 구분 | 데이터베이스명 (DB Name) | 매칭 웹 경로 (DocumentRoot) | 비고 |
 | :--- | :--- | :--- | :--- |
-| **현재 홈페이지** | `hr2` | `/home/hr/www/home/` | XE 기반 메인 사이트 |
-| **구 홈페이지** | `hr` | `/home/hr/www/bbs_old/` | 과거 게시판 데이터 |
-| **심원** | `simone` | `/home/simwon/` | 심원 안병무 기념사업회 (가비아 8086 포트 이전 완료) |
-| **안병무도서관** | `library` | `/data/www/ahn-library/` | 안병무도서관 그누보드4+OpenBiblio (가비아 8087 포트 이전 완료) |
-| **길목** | `gilmok`, `gilmokorg` | `/home/gilmok/` | 길목 웹사이트 (가비아 8085 포트 이전 완료) |
-| **KSCF** | `kscf` | `/home/kscf/` (경로 추정) | 한국기독학생회총연맹 |
-| **기타** | `educrit` 등 | `/home/[계정명]/` | 새 서버 이전 대상 호스팅 사이트들 |
+| **현재 홈페이지** | `hr2` | `/home/hr/www/home/` | XE 기반 메인 사이트 (가비아 8080 포트 운영 중) |
+| **구 홈페이지** | `hr` | `/home/hr/www/bbs_old/` | 과거 게시판 데이터 (가비아 301 리다이렉트 중, #23) |
+| **심원** | `simone` | `/home/simwon/` | 심원 안병무 기념사업회 (가비아 8086 포트 이전 완료, #62) |
+| **안병무도서관** | `library` | `/data/www/ahn-library/` | 안병무도서관 그누보드4+OpenBiblio (가비아 8087 포트 이전 완료, #54) |
+| **길목** | `gilmok`, `gilmokorg` | `/home/gilmok/` | 길목 웹사이트 (가비아 8085 포트 이전 완료, #61) |
+| **교육비평** | `educrit` | `/data/www/educrit/` | 교육비평 (가비아 8084 포트 이전 완료, #60) |
+| **해랑아트** | `haerangart` | `/data/www/haerangart/` | 해랑아트 (가비아 8083 포트 이전 완료, #59) |
+| **박형규목사** | `parkhk` | `/data/www/parkhk/` | 박형규목사 기념사업회 (가비아 8082 포트 이전 완료, #58) |
+| **온갤러리** | `ongallery_xe` | `/data/www/ongallery/` | 온갤러리 (가비아 8081 포트 이전 완료, #26) |
+| **로로브레인** | `rorobrain_web`, `rorobrain`, `rorobrain2` | `/data/www/rorobrain/` | 로로브레인 (가비아 8088 포트 이전 완료, #26) |
+| **KSCF** | `kscf` | `/home/kscf/` | 한국기독학생회총연맹 (가비아 아카이브 완료) |
+| **재미삼아** | `jaemisama` | `/home/jaemisama/` | 재미삼아 (가비아 아카이브 완료) |
+| **cnblaw** | `cnblaw` | `/home/cnblaw/` | 법무법인 cnblaw (가비아 아카이브 완료, #65) |
+| **도서출판b** | `bbook` | `/home/bbook/` | 도서출판b (작업 보류, #66) |
+| **시네마버킷리스트** | `moviediary` | `/home/moviediary/` | 시네마버킷리스트 (담당자 확인 대기, #63) |
 
 **이관 절차:**
 1.  **백업**: `mysqldump` 명령어를 사용하여 각 DB별로 SQL 덤프 파일을 생성합니다.

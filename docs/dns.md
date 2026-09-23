@@ -13,7 +13,7 @@
 | 도메인 | 네임서버 | DNS 서비스 | 메모 | KT→가비아 이관 |
 |---|---|---|---|---|
 | `ahn-library.org` | dnsever OK | 클라우드 DNS | — | → #54 |
-| `b-book.co.kr` | dnsever OK | 클라우드 DNS | — | 이관 대상 외 |
+| `b-book.co.kr` | dnsever OK | 클라우드 DNS | 도서출판b | 작업 보류 ⏸️ (#66) |
 | `educrit.org` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#60) |
 | `gilmok.org` | dnsever OK | 클라우드 DNS | 길목홈페이지 | 이관 완료 ✅ (#61) |
 | `haerangart.com` | dnsever OK | 클라우드 DNS | — | 이관 완료 ✅ (#59) |
@@ -23,12 +23,13 @@
 
 ## 핵심 발견사항
 
-- **DNSEver 관리 도메인**: ahn-library, educrit, gilmok, haerangart, hyanglin, ongallery → **모두 DNS A 레코드 변경 권한 있음** ✅
+- **DNSEver 관리 도메인**: ahn-library, b-book, educrit, gilmok, haerangart, hyanglin, ongallery, rorobrain → **모두 DNS A 레코드 변경 권한 있음** ✅
 - **DNSEver 미등록 도메인** (별도 관리 필요):
   - `parkhyungkyu.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리
   - `simwon.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리 (이관 완료 ✅ #62)
-  - `kscf.kr` → NXDOMAIN (네임서버 미확인)
-  - `jaemisama.org` → DNSever (clientHold 상태, 정지됨)
+  - `kscf.kr` → NXDOMAIN (아카이브 완료 ✅)
+  - `jaemisama.org` → DNSever (clientHold 상태, 아카이브 완료 ✅)
+  - `cnblaw.kr` → NXDOMAIN/만료 (아카이브 완료 ✅ #65)
 
 ## DNS 변경 절차 (DNSEver)
 
