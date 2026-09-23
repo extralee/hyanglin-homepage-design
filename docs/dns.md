@@ -26,9 +26,9 @@
 - **DNSEver 관리 도메인**: ahn-library, educrit, gilmok, haerangart, hyanglin, ongallery → **모두 DNS A 레코드 변경 권한 있음** ✅
 - **DNSEver 미등록 도메인** (별도 관리 필요):
   - `parkhyungkyu.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리
+  - `simwon.org` → 가비아 네임서버 (`ns.gabia.co.kr`) 관리 (이관 완료 ✅ #62)
   - `kscf.kr` → NXDOMAIN (네임서버 미확인)
   - `jaemisama.org` → DNSever (clientHold 상태, 정지됨)
-  - `simwon.org` → 별도 확인 필요
 
 ## DNS 변경 절차 (DNSEver)
 
