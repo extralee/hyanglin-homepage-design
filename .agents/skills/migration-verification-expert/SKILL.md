@@ -20,6 +20,18 @@ description: 이전(Migration) 작업 시 스크린샷 등 표면적인 결과�
 ### 1. 검증의 철저함 (Verification Rigor - 15점)
 - 스크린샷에 의존하기 전, **curl 등 HTTP 클라이언트**를 사용하여 타겟 서버의 해당 파일을 직접 호출했는가?
 - HTTP 상태 코드(예: `200 OK`)가 정상적으로 떨어지는지 확인했는가?
+- **전수 엔드포인트 스캔 의무화**: 루트(`/`)나 XE 메인(`/home/`)에서 HTTP 200이 반환되었다고 검증 완료로 간주하지 않는다.
+  이관 후 반드시 아래를 실행하여 **웹 루트 내 모든 PHP 파일 엔드포인트를 스캔**한다:
+  ```bash
+  # 컨테이너 또는 서버 내부에서 PHP 엔드포인트 전수 HTTP 테스트
+  find /data/www/{사이트}/ -maxdepth 2 -name '*.php' -type f | while read f; do
+    path="${f#/data/www/{사이트}}"
+    code=$(curl -sk -o /dev/null -w '%{http_code}' "http://localhost:{포트}${path}")
+    [ "$code" != "200" ] && echo "⚠️ ${code} ${path}"
+  done
+  ```
+- **Apache/PHP 에러 로그 교차 검증 필수**: HTTP 200이라도 PHP Warning/Error가 출력되고 있을 수 있다.
+  컨테이너 기동 직후 반드시 `docker logs {컨테이너} 2>&1 | grep -iE 'error|warning|fatal|500'`을 실행한다.
 
 ### 2. 아키텍처 인지능력 (Architecture Awareness - 20점)
 - 소스코드 내 하드코딩된 도메인이나 IFRAME, API 엔드포인트가 여전히 구서버를 바라보고 있는지 인지했는가?

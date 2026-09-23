@@ -1,0 +1,36 @@
+diff --git a/contents/lib.php b/contents/lib.php
+--- a/contents/lib.php
++++ b/contents/lib.php
+@@ -14,1 +14,1 @@
+-    @header ("P3P : CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
++    @header ("P3P: CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
+diff --git a/schedule/lib.php b/schedule/lib.php
+--- a/schedule/lib.php
++++ b/schedule/lib.php
+@@ -14,1 +14,1 @@
+-    @header ("P3P : CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
++    @header ("P3P: CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
+diff --git a/contents/config.php b/contents/config.php
+--- a/contents/config.php
++++ b/contents/config.php
+@@ -2,1 +2,1 @@
+-localhost
++172.18.0.1
+diff --git a/schedule/config.php b/schedule/config.php
+--- a/schedule/config.php
++++ b/schedule/config.php
+@@ -2,1 +2,1 @@
+-localhost
++172.18.0.1
+diff --git a/movies/config.php b/movies/config.php
+--- a/movies/config.php
++++ b/movies/config.php
+@@ -2,1 +2,1 @@
+-localhost
++172.18.0.1
+diff --git a/index.php b/index.php
+--- a/index.php
++++ b/index.php
+@@ -3,1 +3,1 @@
+-if($url[Host]=="cinemabucketlist.com"||$url[Host]=="www.cinemabucketlist.com"||$url[Host]=="moviediary.co.kr"||$url[Host]=="www.moviediary.co.kr") $url="http://www.cinemabucketlist.com/home";
++if($url[Host]=="cinemabucketlist.com"||$url[Host]=="www.cinemabucketlist.com"||$url[Host]=="moviediary.co.kr"||$url[Host]=="www.moviediary.co.kr") $url="https://www.cinemabucketlist.com/home";

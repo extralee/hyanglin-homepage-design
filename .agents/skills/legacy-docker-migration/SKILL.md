@@ -69,6 +69,24 @@ description: 지원이 종료된(EOL) 레거시 웹 서비스/홈페이지를 Do
   }
   ```
 
+### 6-1. 프로덕션 PHP 에러 출력 억제 (`display_errors = Off`)
+- 레거시 PHP 5.x 코드에는 `eregi()`, `split()` 등 Deprecated 함수와 foreach 인수 오류 등 경고가 다수 존재한다. 프로덕션에서 이를 브라우저에 노출하면 보안 위험(경로 노출)과 사용자 경험 저하를 초래한다.
+- 공유 `php.ini`에 반드시 다음을 포함:
+  ```ini
+  display_errors = Off
+  error_reporting = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED
+  ```
+
+### 6-2. 레거시 PHP의 비표준 HTTP 헤더로 인한 Apache 500 에러
+- 레거시 PHP 앱의 `lib.php` 등에서 `header("P3P : CP=...")` 처럼 **헤더 이름에 후행 공백**이 포함된 경우, Apache 2.4가 `AH02429: Response header name contains invalid characters` 에러를 발생시키고 응답을 500으로 중단한다.
+- 이관 직후 schedule/contents 등 독립 PHP 앱에서 500이 발생하면, `docker logs`에서 `AH02429` 키워드를 확인하고 해당 PHP 파일의 `header()` 호출에서 헤더 이름 공백을 제거한다:
+  ```php
+  // ❌ 잘못된 예 (Apache 500 유발)
+  @header ("P3P : CP=\"ALL ...\");
+  // ✅ 올바른 예
+  @header("P3P: CP=\"ALL ...\");
+  ```
+
 ### 7. XE/CMS 회원 로그인 식별자(Identifier) 사전 판별 규칙
 - **DB `user_id`와 실제 로그인 입력값의 구분**: DB 회원 테이블(`xe_member`)에서 `user_id`가 `t61927`로 확인되더라도, 실제 로그인 창에 입력할 아이디 값이 `user_id`라고 단정 짓지 않는다.
 - **CMS 식별자 정책 사전 검사 의무화**: 계정 조회/안내 시 반드시 XE 회원 모듈 설정(`$oMemberModel->getMemberConfig()->identifier`) 또는 DB `xe_module_config`를 사전 확인한다.
@@ -213,6 +231,8 @@ services:
 | 8084 | educrit (educrit.org) | #60 |
 | 8085 | gilmok (gilmok.org) | #61 |
 | 8086 | simwon (simwon.org) | #62 |
+| 8087 | ahn-library (ahn-library.org) | #54 |
+| 8088 | rorobrain (rorobrain.com) | #26 |
 
 **Nginx vhost에서 해당 포트로 프록시:**
 ```nginx
@@ -234,6 +254,21 @@ sed -i "s|'default_url' => 'http://|'default_url' => 'https://|g" db.config.php
 # 캐시 삭제 필수
 rm -rf home/files/cache/*
 ```
+
+#### 다중 PHP 앱의 독립 DB 설정 파일 전수 탐색
+
+레거시 사이트는 하나의 웹 루트 안에 XE(CMS), 제로보드, 자체 제작 PHP 앱 등 **복수의 독립적인 PHP 애플리케이션**이 공존하는 경우가 흔하다.
+각 앱은 자체적인 DB 설정 파일을 보유하며, XE의 `db.config.php`만 수정하면 다른 앱의 DB 접속이 실패한다.
+
+**이관 직후 필수 실행:**
+```bash
+# 웹 루트 전체에서 DB 설정 파일 전수 탐색
+find /data/www/{사이트}/ -name '*.php' -exec grep -l 'mysql_connect\|mysqli_connect\|db_host\|db_password\|PDO.*mysql' {} \;
+# 또는 config라는 이름을 가진 PHP 파일 전수 검색
+find /data/www/{사이트}/ -name '*config*.php' -type f
+```
+
+발견된 모든 설정 파일에서 `localhost` / `127.0.0.1` → `172.18.0.1` (Docker bridge) 변경을 적용해야 한다.
 
 ---
 
@@ -310,4 +345,36 @@ sudo docker compose run --rm --entrypoint certbot certbot certonly \
 #### ④ 사용자 검증 안내 수칙 (브라우저 캐시 주의)
 더미 인증서 상태에서 사용자가 브라우저로 접속한 이력이 있다면, 크롬 브라우저가 해당 탭에 '보안 경고'를 캐시해 둔다.
 따라서 정식 SSL 적용 후 사용자에게 검증을 요청할 때는 단순 새로고침이 아니라 **"현재 탭을 닫고 새 탭을 열거나, 시크릿 창(Ctrl+Shift+N)으로 확인"**하도록 반드시 안내한다.
+
+---
+
+### 11. 🛡️ Nginx conf.d 파일 알파벳 순서(Include Order) 함정 주의
+- Nginx는 `conf.d/*.conf`를 **알파벳 순**으로 로드한다.
+- `default.conf`에 정의된 커스텀 `log_format`(예: `security`)은 알파벳 순으로 `default.conf`보다 앞서는 파일(`ahn-library.conf` 등)에서 참조할 경우 `unknown log format "security"` 에러를 내며 Nginx 기동이 실패한다.
+- **해결책**:
+  - `default.conf`보다 알파벳 순으로 앞선 사이트 conf는 표준 `combined` 포맷을 사용하거나,
+  - 커스텀 로그 포맷 정의를 `00-log-formats.conf`처럼 가장 먼저 로드되는 파일로 분리한다.
+
+---
+
+### 12. 🛡️ 그누보드4 커스텀 CMS 이관 시 수칙
+- **설정 파일**: XE(`files/config/db.config.php`)와 달리 루트의 `dbconfig.php` 및 보조 솔루션(`reports/config.php` 등)에 DB 정보가 존재함.
+- **CAPTCHA**: 회원가입 시 이미지 생성을 위해 Apache PHP 5.6에 **GD 라이브러리(`freetype`, `jpeg`, `png`)**가 반드시 활성화되어 있어야 함.
+- **디렉터리 권한**: `data/` 및 `upload/` 디렉터리에 `chmod -R 777` 부여 필수.
+
+---
+
+### 13. 🚨 MySQL 8.0 `password()` 제거 및 평문 비밀번호 노출 취약점 방지 (필수 패치)
+- **원인**: MySQL 8.0에서는 구형 `password()` 내장 함수가 완전히 제거되어 그누보드4의 `sql_password()` 호출(`SELECT password('$value')`) 시 **1064 Syntax Error**가 발생한다.
+- **치명적 위험**: 그누보드4의 기본 `sql_query()` 에러 핸들러는 쿼리 실패 시 SQL 원본을 `die("<p>$sql<p>...")`로 화면에 출력하므로, **사용자가 입력한 비밀번호 평문이 브라우저에 그대로 노출**되는 심각한 보안 사고가 발생한다.
+- **필수 조치**:
+  1. `lib/common.lib.php` 내 `sql_password()` 함수를 MySQL 4.1+ 해시와 100% 동일한 PHP 네이티브 해시 함수로 대체:
+     ```php
+     function sql_password($value) {
+         return '*' . strtoupper(sha1(sha1($value, true)));
+     }
+     ```
+  2. `lib/common.lib.php` 내 `sql_query()` 에러 핸들러에서 `$sql` 화면 출력을 제거하고, 일반 안내 메시지 및 `error_log` 시스템 로깅으로 전환.
+
+
 

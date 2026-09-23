@@ -1,0 +1,21 @@
+diff -u contents/lib.php.bak contents/lib.php
+--- contents/lib.php
++++ contents/lib.php
+@@ -11,4 +11,4 @@
+     // W3C P3P 규약설정
+-    @header ("P3P : CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
++    @header ("P3P: CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
+diff -u bbs/lib.php.bak bbs/lib.php
+--- bbs/lib.php
++++ bbs/lib.php
+@@ -10,4 +10,4 @@
+     // W3C P3P 규약설정 
+-    @header ("P3P : CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
++    @header ("P3P: CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
+diff -u register/lib.php.bak register/lib.php
+--- register/lib.php
++++ register/lib.php
+@@ -11,4 +11,4 @@
+     // W3C P3P 규약설정
+-    @header ("P3P : CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
++    @header ("P3P: CP=\"ALL CURa ADMa DEVa TAIa OUR BUS IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE LOC OTC\"");
