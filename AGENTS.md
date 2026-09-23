@@ -94,6 +94,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 5. 운영 레퍼런스
 
+- **전체 사이트 목록**(도메인, 포트, 컨테이너, CMS, 보안 현황)은 [docs/sites.md](docs/sites.md)를 참조한다.
 - 서버 아키텍처, Docker 컨테이너 맵, 볼륨 마운트, 설정 파일 위치, 장애 조사 체크리스트 등 상세 운영 정보는 [docs/ops-reference.md](docs/ops-reference.md)를 참조한다.
 
 ## 6. 임시 파일 규칙

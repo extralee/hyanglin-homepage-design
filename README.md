@@ -101,6 +101,8 @@ cat backups/backup.log
 ## 📌 주요 문서 레퍼런스
 - [1prd.md](file:///home/hyuk/prj/hyanglin-legacy/1prd.md) — 프로젝트 단일 진실 원천 (SSOT)
 - [AGENTS.md](file:///home/hyuk/prj/hyanglin-legacy/AGENTS.md) — AI 에이전트 지침 및 스킬 인벤토리
+- [docs/sites.md](docs/sites.md) — **전체 사이트 목록** (도메인, 포트, 컨테이너, 보안 현황)
+- [docs/ops-reference.md](docs/ops-reference.md) — 서버 운영 레퍼런스
 - [docs/new-server-architecture.md](file:///home/hyuk/prj/hyanglin-legacy/docs/new-server-architecture.md) — 신규 서버 환경 및 아키텍처 가이드 (레거시 개발자용)
 - [docs/legacy-homepage.md](file:///home/hyuk/prj/hyanglin-legacy/docs/legacy-homepage.md) — 레거시 서버 구조 상세 문서
 
