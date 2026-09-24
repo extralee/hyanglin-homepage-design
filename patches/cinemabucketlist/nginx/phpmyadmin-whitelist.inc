@@ -3,6 +3,7 @@
 # 가비아 방화벽에 IP를 추가한 뒤, 이 파일에도 동일하게 추가하세요.
 #
 # 적용 대상: cinemabucketlist.conf (phpMyAdmin location 블록)
+# *.conf 와일드카드 자동 로딩 방지를 위해 확장자를 .inc로 유지해야 합니다.
 # 수정 후 Nginx 리로드 필요:
 #   sudo docker exec hyanglin-home-infra-nginx-1 nginx -s reload
 
