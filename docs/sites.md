@@ -1,7 +1,7 @@
 # 🌐 가비아 프로덕션 서버 사이트 목록
 
 > **서버**: 45.115.154.229 (가비아 VPS)
-> **마지막 업데이트**: 2026-09-23
+> **마지막 업데이트**: 2026-09-24
 
 ---
 
@@ -15,8 +15,7 @@
 | 2 | **안병무도서관** | [ahn-library.org](https://www.ahn-library.org/) | 8087 | ahn-library | 그누보드4 + OpenBiblio (PHP 5.6) | 도서 검색·대출, 커스텀 관리자(일정/업무일지/업무시간) |
 | 3 | **이양노 갤러리** | [ongallery.co.kr](https://www.ongallery.co.kr/) | 8081 | ongallery | XE (PHP 5.6) | 이양노 10주기 회고전 |
 | 4 | **향린 재정 시스템** | [finance.hyanglin.org](https://finance.hyanglin.org/) | 3000 | Host PM2 (Next.js) | Next.js | 지출결의서 및 재정 관리 (**비-Docker**) |
-| 5 | **심원 아카이브** | [simwon.org](https://www.simwon.org/) | 8086 | simwon | XE (PHP 5.6) | 심원 안병무 아카이브 (XE 로그인 폼 존재) |
-| 6 | **법무법인오늘** | [법무법인오늘.com](https://www.xn--wh1b76ni4aba943jj2b.com/home/) | 8091 | cnblaw | XE (PHP 5.6) | 법무법인 오늘 (한글 도메인, 퓨니코드: xn--wh1b76ni4aba943jj2b.com) |
+| 5 | **법무법인오늘** | [법무법인오늘.com](https://www.xn--wh1b76ni4aba943jj2b.com/home/) | 8091 | cnblaw | XE (PHP 5.6) | 법무법인 오늘 (한글 도메인, 퓨니코드: xn--wh1b76ni4aba943jj2b.com) |
 
 ---
 
@@ -88,6 +87,7 @@
 8088 → 로로브레인 (Docker PHP)
 8089 → 비북 (Docker PHP)
 8090 → 시네마 버킷리스트 (Docker PHP)
+8091 → 법무법인오늘 (Docker PHP)
 ```
 
 ---
@@ -119,6 +119,7 @@
 | parkhyungkyu.org | ns.gabia.net |
 | simwon.org | ns.gabia.net |
 | cinemabucketlist.com | ns1.gabia.co.kr |
+| 법무법인오늘.com (xn--wh1b76ni4aba943jj2b.com) | ns.gabia.net |
 
 > 모든 도메인의 A 레코드는 가비아 VPS IP `45.115.154.229`를 가리켜야 합니다.
 

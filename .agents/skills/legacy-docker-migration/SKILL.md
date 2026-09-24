@@ -233,6 +233,9 @@ services:
 | 8086 | simwon (simwon.org) | #62 |
 | 8087 | ahn-library (ahn-library.org) | #54 |
 | 8088 | rorobrain (rorobrain.com) | #26 |
+| 8089 | bbook (b-book.co.kr) | #66 |
+| 8090 | moviediary (cinemabucketlist.com) | #63 |
+| 8091 | cnblaw (법무법인오늘.com) | #76 |
 
 **Nginx vhost에서 해당 포트로 프록시:**
 ```nginx
