@@ -282,6 +282,55 @@ while IFS= read -r line; do
 done < <(df -h | grep -E '^/dev/')
 
 # ===========================================================================
+# 4-1. NAS 사용량 현황 / NAS (NFS Mount) Disk Usage
+# ===========================================================================
+NAS_ROWS_HTML=""
+while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    nas_fs=$(echo "$line" | awk '{print $1}')
+    nas_size=$(echo "$line" | awk '{print $2}')
+    nas_used=$(echo "$line" | awk '{print $3}')
+    nas_avail=$(echo "$line" | awk '{print $4}')
+    nas_pct=$(echo "$line" | awk '{print $5}')
+    nas_mount=$(echo "$line" | awk '{print $6}')
+    nas_pct_num=$(echo "$nas_pct" | tr -d '%')
+
+    # NAS 크기 단위를 GB 숫자로 변환 (T=*1000, G=그대로, M=0)
+    nas_size_num=$(echo "$nas_size" | awk '{
+        v = $1
+        if (v ~ /T/) { gsub(/T/, "", v); print int(v) * 1000 }
+        else if (v ~ /G/) { gsub(/G/, "", v); print int(v) }
+        else { print 0 }
+    }')
+    nas_avail_num=$(echo "$nas_avail" | awk '{
+        v = $1
+        if (v ~ /T/) { gsub(/T/, "", v); print int(v) * 1000 }
+        else if (v ~ /G/) { gsub(/G/, "", v); print int(v) }
+        else { print 0 }
+    }')
+
+    # 색상: 80% 이상 또는 여유 100G 이하 → 빨강, 70% 이상 → 주황, 그 외 → 정상
+    if [ "${nas_pct_num:-0}" -ge 80 ] 2>/dev/null || [ "${nas_avail_num:-9999}" -le 100 ] 2>/dev/null; then
+        nas_val_color="#d32f2f; font-weight:bold;"
+    elif [ "${nas_pct_num:-0}" -ge 70 ] 2>/dev/null; then
+        nas_val_color="#dd6b20; font-weight:bold;"
+    else
+        nas_val_color="#2d3748;"
+    fi
+
+    NAS_ROWS_HTML+="<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-bottom:1px solid #edf2f7; padding:6px 0;\">"
+    NAS_ROWS_HTML+="<tr>"
+    NAS_ROWS_HTML+="<td align=\"left\" style=\"font-size:13px; color:#4a5568;\">${nas_mount} (${nas_fs})</td>"
+    NAS_ROWS_HTML+="<td align=\"right\" style=\"font-size:13px; color:${nas_val_color}\">${nas_used} / ${nas_size} (${nas_pct})</td>"
+    NAS_ROWS_HTML+="</tr>"
+    NAS_ROWS_HTML+="</table>"
+done < <(df -h 2>/dev/null | grep -v '^파일\|^Filesystem\|^tmpfs\|^/dev/' | grep -v '^$')
+
+if [ -z "$NAS_ROWS_HTML" ]; then
+    NAS_ROWS_HTML="<div style=\"font-size:12px; color:#a0aec0; text-align:center; padding:10px 0;\">NAS 마운트 없음 또는 응답 없음</div>"
+fi
+
+# ===========================================================================
 # 5. 재정 시스템 교적 동기화 요약 (Dimode Sync Summary)
 # ===========================================================================
 SYNC_ROWS_HTML=""
@@ -380,6 +429,12 @@ cat <<EOF > "$REPORT_FILE"
                 ${DISK_PARTITION_ROWS}
             </div>
 
+            <!-- NAS 사용량 현황 -->
+            <div class="section-title">NAS 사용량 / NAS STORAGE (NFS MOUNT)</div>
+            <div class="metric-card">
+                ${NAS_ROWS_HTML}
+            </div>
+
             <!-- 백업 요약 -->
             <div class="section-title">백업 요약 / BACKUP SUMMARY (${YESTERDAY})</div>
             <div class="metric-card">
@@ -389,6 +444,7 @@ cat <<EOF > "$REPORT_FILE"
                         <td align="right"><span class="status-badge" style="background:${BACKUP_SUMMARY_COLOR};">${BACKUP_SUMMARY_TEXT}</span></td>
                     </tr>
                 </table>
+
                 ${BACKUP_ROWS_HTML}
             </div>
 
