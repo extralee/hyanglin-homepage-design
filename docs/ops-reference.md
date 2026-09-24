@@ -123,6 +123,40 @@ sudo docker exec hyanglin-home-infra-nginx-1 nginx -t && sudo docker exec hyangl
 > KT_MYSQL_PW=$(secret-tool lookup Title "hyanglin-homepage .env.production" | grep -E '^KT_MYSQL_PW=' | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 > ```
 
+### 6-1. Docker 네트워크 대역 설명 (172.17 vs 172.18)
+
+phpMyAdmin 사용자 목록에서 호스트가 `172.17.%`와 `172.18.%` 두 종류로 나뉘는 이유:
+
+| 대역 | Docker 네트워크 이름 | 역할 |
+|---|---|---|
+| `172.17.x.x` | `bridge` (Docker 기본) | Docker 설치 시 자동 생성되는 기본 네트워크. 현재 실제 컨테이너가 사용하지 않음. |
+| `172.18.x.x` | `hyanglin-home` (커스텀) | PHP 앱 컨테이너들이 실제로 사용하는 네트워크. DB 접속은 이 대역으로만 발생. |
+
+> [!IMPORTANT]
+> **phpMyAdmin 계정을 새로 만들 때는 반드시 `172.18.%` 호스트로만 만들면 됩니다.**
+> `172.17.%`는 현재 아무도 사용하지 않는 대역이므로 신규 계정에 추가하지 않아도 됩니다.
+> `localhost` 호스트도 phpMyAdmin 용도에는 불필요합니다.
+
+### 6-2. phpMyAdmin 관리자 계정 목록 (SSOT)
+
+접속 URL: `https://www.cinemabucketlist.com/phpMyAdmin/`
+접속 허용 IP: `211.177.80.14` (mountain 머신)만 허용, 그 외 403 차단
+
+| MySQL 계정 | 호스트 | 비밀번호 관리 | 용도 |
+|---|---|---|---|
+| `root` | `172.18.%` | KeePass `KT_MYSQL_PW` | PHP 앱 자동 사용 (건드리지 말 것) |
+| `extralee` | `172.18.%` | 별도 관리 | 관리자 phpMyAdmin 접속 |
+| `williamc` | `172.18.%` | 별도 관리 | 관리자 phpMyAdmin 접속 |
+| `wonhyukc` | `172.18.%` | 별도 관리 | 관리자 phpMyAdmin 접속 |
+
+> [!NOTE]
+> **신규 phpMyAdmin 계정 생성 명령어 (표준):**
+> ```bash
+> sudo mysql -e "CREATE USER '{계정명}'@'172.18.%' IDENTIFIED WITH mysql_native_password BY '{비밀번호}'; GRANT ALL PRIVILEGES ON *.* TO '{계정명}'@'172.18.%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+> ```
+>
+> **KT → 가비아 마이그레이션 주의**: mysqldump는 테이블 데이터만 이관하며, MySQL 계정(`mysql.user`)은 자동으로 이관되지 않습니다. 가비아 서버에서 수동으로 재생성해야 합니다.
+
 > [!NOTE]
 > 새 레거시 사이트 DB를 추가할 때:
 > 1. 호스트에서 `sudo mysql -u root -e "CREATE DATABASE {db_name} CHARACTER SET utf8;"`
