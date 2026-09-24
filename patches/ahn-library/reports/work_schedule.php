@@ -104,7 +104,7 @@ while($data=@mysql_fetch_array($result)) {
 </form>
 </div>
 
-<div id="box_table">
+<div id="box_table" style="z-index:9999;">
 <table class='input_table' id='box_table2' border=0 cellpadding=0 cellspacing=0>
 <form method=post action="schedule_ok.php" name="reserve_form" id="reserve_form" enctype="multipart/form-data">
 <input type='hidden' name='cr_no' id='cr_no'>
@@ -256,8 +256,8 @@ for($k=1; $k<=$cal_view_weeks; $k++) {
 		echo "
 			<td class='cal $month_start $week_start' $today_border>
 			<table class='cal_in_table'>
-			<tr><td class='cal_in_date'>
-			<table class='cal_date_table'><tr><td class='cal_date_td' onclick='is_move=1; set_reserve_init(); get_init_ajax_data(\"$ymd\")'><span class='$day_color'>$mm.$dd</span></td>$month_view</tr></table>
+			<tr><td class='cal_in_date' onclick='is_move=1; set_reserve_init(); get_init_ajax_data(\"$ymd\")' style='cursor:pointer;'>
+			<table class='cal_date_table'><tr><td class='cal_date_td'><span class='$day_color'>$mm.$dd</span></td>$month_view</tr></table>
 			</td></tr>
 		";
 		for($ccc=1; $ccc<$same_date_num; $ccc++) {
@@ -304,23 +304,21 @@ $('body').click(function (e) {
 	if(is_move==1) {
 		click_left=e.pageX;
 	    click_top=e.pageY;
+		var dw = $(document).width() || $(window).width() || 1000;
+		var dh = $("#schedule_main").height() || 2000;
 		var pPosX=0;
 		if(click_left+370>dw) {
-			pPosX=dw-370;
+			pPosX=Math.max(10, dw-370);
 		} else {
 			pPosX=click_left;
 		}
 		if(dw<480) pPosX=0;
-		var pPosY=0;
 		var pHeight=293;
-		if(parent.windowWidth<480) pHeight=263;
-		if(click_top+pHeight>dh) {
-			pPosY=dh-pHeight;
-		} else {
-			pPosY=click_top;
+		var pPosY=click_top;
+		if(dh > pHeight && click_top+pHeight>dh) {
+			pPosY=Math.max(10, dh-pHeight);
 		}
-		$("#box_table").css("top",pPosY);
-		$("#box_table").css("left",pPosX);
+		$("#box_table").css({"top":pPosY+"px", "left":pPosX+"px", "display":"block", "z-index":9999});
 		is_move=0;
 	}
 });
@@ -443,10 +441,15 @@ function get_init_ajax_data(d,n) {
 	if(dd<10) dd="0"+dd;
 	var today=$("#cr_year").val()+""+mm+""+dd;
 	var member_srl=$("#cr_member_no").val();
+	if(!member_srl || member_srl=="0") {
+		member_srl = "00001";
+		$("#cr_member_no").val(member_srl);
+		$("#cr_member_no2").val(member_srl);
+	}
 	if(d>0) today=d;
-	if(member_srl>0) {
+	if(member_srl != "") {
 		if(n!=1) {
-			$("#box_table").css("display","block");
+			$("#box_table").css({"display":"block", "z-index":9999});
 		}
 		$.ajax({
 			url:"./schedule_get_user.php",
@@ -476,11 +479,17 @@ function get_init_ajax_data(d,n) {
 				subject_ok=0;
 				//$("#cr_subject").val("");
 				$("#place_reserve_delete_bt").css("display","none");
+			},
+			error:function(){
+				$("#cr_no").val("");
+				$("#is_admin").val("1");
+				$("#cr_year").val(parseInt(today.substring(0,4)));
+				$("#cr_month").val(parseInt(today.substring(4,6)));
+				$("#cr_day").val(parseInt(today.substring(6,8)));
+				$("#place_reserve_ok_bt").text("등록").css("display","inline-block");
+				$("#place_reserve_delete_bt").css("display","none");
 			}
-		})
-	} else {
-		if(n!=1) $(".login_widget",parent.document).show();
-		return false;
+		});
 	}
 }
 
