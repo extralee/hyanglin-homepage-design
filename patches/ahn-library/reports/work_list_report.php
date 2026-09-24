@@ -1,7 +1,11 @@
 <?
-extract($_REQUEST);
-require "lib.php";
+require_once "lib.php";
 if(!$connect) $connect=dbConn();
+
+$no = isset($_REQUEST["no"]) ? intval($_REQUEST["no"]) : 0;
+$page = isset($_REQUEST["page"]) ? intval($_REQUEST["page"]) : 1;
+$mid = isset($_REQUEST["mid"]) ? mysql_real_escape_string($_REQUEST["mid"], $connect) : "";
+$del = isset($_REQUEST["del"]) ? intval($_REQUEST["del"]) : 0;
 $reg_date=time();
 $date=date("Y-m-d", $reg_date);
 
