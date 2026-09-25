@@ -195,36 +195,12 @@ if ! $SSH_CMD "echo ok" >/dev/null 2>&1; then
 fi
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# [1단계 공통] 향린 재정 + 향린 메인 홈페이지
+# [1단계 공통] 향린 메인 홈페이지 + 향린 재정
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-echo "  [핵심 1] 향린 재정 관리 시스템 (finance.hyanglin.org)"
+echo "  [핵심 1] 향린교회 메인 홈페이지 (hyanglin.org)"
 echo "  ──────────────────────────────────────────────"
 
-# 1. 재정 시스템 웹 서빙 (포트 3000)
-check_web_endpoint "향린 재정 웹" "finance.hyanglin.org" "/" "3000"
-
-# 2. PM2 프로세스 상태
-pm2_status=$($SSH_CMD "pm2 jlist 2>/dev/null" | grep -o '"name":"hyanglin-finance"[^}]*"status":"online"' 2>/dev/null || echo "")
-if [[ -n "$pm2_status" ]]; then
-  result PASS "재정 PM2 프로세스" "online 구동 중"
-else
-  # pm2 list로 재확인
-  pm2_raw=$($SSH_CMD "pm2 list 2>/dev/null" || echo "")
-  if echo "$pm2_raw" | grep -q "online"; then
-    result PASS "재정 PM2 프로세스" "online 구동 중"
-  else
-    result FAIL "재정 PM2 프로세스" "프로세스 offline 또는 중단됨"
-  fi
-fi
-
-# 3. 재정 SSL 인증서
-check_ssl "finance.hyanglin.org" "재정 SSL 인증서"
-
-echo ""
-echo "  [핵심 2] 향린교회 메인 홈페이지 (hyanglin.org)"
-echo "  ──────────────────────────────────────────────"
-
-# 4. 향린 메인 페이지
+# 1. 향린 메인 페이지
 homepage_raw=$($SSH_CMD "curl -s -o /dev/null -w '%{http_code} %{size_download}' --max-time 15 'http://localhost:8080/'" 2>/dev/null || echo "000 0")
 http_code=$(echo "$homepage_raw" | awk '{print $1}')
 content_length=$(echo "$homepage_raw" | awk '{print $2}')
@@ -240,7 +216,7 @@ else
   result FAIL "향린 메인 페이지" "HTTP ${http_code}"
 fi
 
-# 5. 출석체크 — 비인증 차단 (403)
+# 2. 출석체크 — 비인증 차단 (403)
 unauth_code=$($SSH_CMD "curl -s -o /dev/null -w '%{http_code}' --max-time 10 'http://localhost:8080/contents/member-list.php'" 2>/dev/null || echo "000")
 if [[ "$unauth_code" == "403" ]]; then
   result PASS "향린 출석체크 (비인증)" "HTTP 403 차단 정상"
@@ -248,7 +224,7 @@ else
   result FAIL "향린 출석체크 (비인증)" "HTTP ${unauth_code} (403 기대)"
 fi
 
-# 6. 출석체크 — 인증 접근 (200)
+# 3. 출석체크 — 인증 접근 (200)
 session_key=$($SSH_CMD 'sudo docker exec hyanglin-home-src-web-1 php -r '"'"'
 define("__XE__", true);
 include("/var/www/html/files/config/db.config.php");
@@ -270,8 +246,32 @@ else
   result WARN "향린 출석체크 (인증)" "유효한 관리자 세션 없음 (미검증)"
 fi
 
-# 7. 향린 SSL 인증서
+# 4. 향린 SSL 인증서
 check_ssl "www.hyanglin.org" "향린 SSL 인증서"
+
+echo ""
+echo "  [핵심 2] 향린 재정 관리 시스템 (finance.hyanglin.org)"
+echo "  ──────────────────────────────────────────────"
+
+# 5. 재정 시스템 웹 서빙 (포트 3000)
+check_web_endpoint "향린 재정 웹" "finance.hyanglin.org" "/" "3000"
+
+# 6. PM2 프로세스 상태
+pm2_status=$($SSH_CMD "pm2 jlist 2>/dev/null" | grep -o '"name":"hyanglin-finance"[^}]*"status":"online"' 2>/dev/null || echo "")
+if [[ -n "$pm2_status" ]]; then
+  result PASS "재정 PM2 프로세스" "online 구동 중"
+else
+  # pm2 list로 재확인
+  pm2_raw=$($SSH_CMD "pm2 list 2>/dev/null" || echo "")
+  if echo "$pm2_raw" | grep -q "online"; then
+    result PASS "재정 PM2 프로세스" "online 구동 중"
+  else
+    result FAIL "재정 PM2 프로세스" "프로세스 offline 또는 중단됨"
+  fi
+fi
+
+# 7. 재정 SSL 인증서
+check_ssl "finance.hyanglin.org" "재정 SSL 인증서"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # [2단계] 이관된 전체 웹 사이트 점검

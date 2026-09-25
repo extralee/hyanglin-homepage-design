@@ -22,7 +22,7 @@ description: 향린교회 프로덕션 서버(45.115.154.229)의 주요 서비�
 프로젝트 루트에서 스크립트를 실행한다:
 
 ```bash
-# 1단계: 향린 재정 + 향린 메인 홈페이지 + 기본 인프라 (기본값)
+# 1단계: 향린 메인 홈페이지 + 향린 재정 + 기본 인프라 (기본값)
 bash .agents/skills/health-check/scripts/health-check.sh 1
 
 # 2단계: 이관된 전체 13개 웹 사이트 + 전체 인프라
@@ -37,18 +37,18 @@ bash .agents/skills/health-check/scripts/health-check.sh all
 
 ## 📋 단계별 검증 범위
 
-### [1단계] 핵심 서비스 (향린 재정 + 향린 홈)
+### [1단계] 핵심 서비스 (향린 홈 + 향린 재정)
 주요 서비스의 연속성과 가용성을 빠르게 점검할 때 사용합니다.
 
-1. **향린 재정 시스템 (`finance.hyanglin.org`, 내부 3000)**
-   - 외부 HTTPS 서빙 응답 (HTTP 200) 및 내부 포트 3000 폴백
-   - Host PM2 프로세스 상태 (`hyanglin-finance` online 여부)
-   - 재정 SSL 인증서 만료일 점검 (≥ 14일 PASS, 7-13일 WARN, < 7일 FAIL)
-2. **향린교회 메인 홈페이지 (`www.hyanglin.org`, 내부 8080)**
+1. **향린교회 메인 홈페이지 (`www.hyanglin.org`, 내부 8080)**
    - 메인 페이지 응답 (내부 8080 HTTP 200, 본문 크기 > 10KB)
    - 출석체크 비인증 차단 (HTTP 403)
    - 출석체크 인증 접근 (유효 세션키 접근 시 HTTP 200)
    - 향린 SSL 인증서 만료일 점검
+2. **향린 재정 시스템 (`finance.hyanglin.org`, 내부 3000)**
+   - 외부 HTTPS 서빙 응답 (HTTP 200) 및 내부 포트 3000 폴백
+   - Host PM2 프로세스 상태 (`hyanglin-finance` online 여부)
+   - 재정 SSL 인증서 만료일 점검 (≥ 14일 PASS, 7-13일 WARN, < 7일 FAIL)
 3. **기본 인프라**
    - 루트(`/`) 및 데이터(`/data`) 파티션 디스크 사용률 (< 80%)
    - Docker 컨테이너 구동 수 점검
