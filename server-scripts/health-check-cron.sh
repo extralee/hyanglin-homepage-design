@@ -7,7 +7,7 @@
 
 # ── 텔레그램 설정 ─────────────────────────────
 TELEGRAM_BOT_TOKEN="8037347881:AAEXiAPgEC3iEzv-6MwNC0AN2ughbtZqm3E"
-TELEGRAM_CHAT_ID="-5458760122"
+TELEGRAM_CHAT_ID="-1004408048565"
 
 # ── 검증 대상 ─────────────────────────────────
 # 이름|내부포트|경로
