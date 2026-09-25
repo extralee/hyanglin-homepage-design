@@ -111,3 +111,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
   `[로컬 patches/ 수정]` ➔ `[로컬 브라우저 시뮬레이션 검증]` ➔ `[로컬 Git 커밋]` ➔ `[서버로 SCP 전송 및 적용 (prod-server-guard 승인 후)]`
 - **서버 단독 수정 금지**: 서버에서만 파일을 직접 고치고 로컬 Git에 남기지 않는 행위를 금지한다. 서버 장애, 컨테이너 재빌드, 다음 서버 이전 시 수정 내역이 모두 유실되기 때문이다.
 
+## 8. 보안/인프라 변경 전 이력 확인 의무
+
+보안 방어, Rate Limiting, 방화벽 규칙, 서버 설정 변경을 제안하기 전에 반드시 `gh issue list --state all`로 관련 과거 이슈를 조회하여 이전 시도의 부작용을 확인한다. **이전에 롤백된 방법을 다시 제안하지 않는다.**
+
+- 변경 제안 전: `gh issue list --state all --limit 30` 및 관련 키워드 검색
+- 과거에 실패하거나 부작용이 발생한 접근법이 있다면, 해당 이슈를 명시하며 대안을 제시한다
+- 예시: Nginx Rate Limiting이 이미지 깨짐을 유발했다면 (#44), fail2ban 등 다른 방법을 1순위로 제안
+
+
