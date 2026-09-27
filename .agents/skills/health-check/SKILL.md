@@ -100,7 +100,8 @@ TELEGRAM_CHAT_ID="-1001234567890"  # 채널 ID 또는 @채널사용자명
 
 ## ⚠️ 전제 조건 및 보안
 
-- SSH 키 인증이 설정되어 있어야 한다 (`ssh -p 2222 wonhyukc@45.115.154.229`)
+- SSH 키 인증 및 `sshy` 접속 설정이 되어 있어야 한다 (`sshy` 별칭, `~/.ssh/config`의 `Host sshy`, 또는 `SSH_CMD` 환경변수)
 - mountain 머신 IP에서만 SSH 접속 가능 (방화벽 제약)
 - 이 스킬은 **READ-ONLY** 작업만 수행한다 (서버 변경 없음)
 - SSH 명령 실행 시 `prod-server-guard`의 사전 승인 절차를 준수한다.
+

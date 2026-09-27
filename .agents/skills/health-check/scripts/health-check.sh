@@ -32,6 +32,7 @@ usage() {
   -h, --help    이 도움말을 출력하고 종료
 
 환경변수 / 설정:
+  SSH_CMD              직접 지정할 SSH 접속 명령 (기본값: sshy 별칭 또는 ssh sshy 자동 감지)
   TELEGRAM_BOT_TOKEN   텔레그램 장애 알림 봇 토큰
   TELEGRAM_CHAT_ID     텔레그램 알림 대상 채팅 ID
   ~/.config/hyanglin/telegram.conf   위 환경변수를 파일로 설정 가능
@@ -62,8 +63,45 @@ if [[ "$STAGE" != "1" && "$STAGE" != "2" && "$STAGE" != "all" ]]; then
   exit 1
 fi
 
+# ── SSH 접속 명령 해석 (sshy 별칭 및 config 자동 지원) ──────
+resolve_ssh_cmd() {
+  # 1. 환경변수 SSH_CMD 또는 SSHY_CMD가 명시된 경우 최우선 사용
+  if [[ -n "${SSH_CMD:-}" ]]; then
+    echo "$SSH_CMD"
+    return 0
+  fi
+  if [[ -n "${SSHY_CMD:-}" ]]; then
+    echo "$SSHY_CMD"
+    return 0
+  fi
+
+  # 2. ~/.ssh/config에 Host sshy가 등록되어 있거나 ssh sshy로 직접 접속 가능한 경우
+  if ssh -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new sshy "echo ok" >/dev/null 2>&1; then
+    echo "ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new sshy"
+    return 0
+  fi
+
+  # 3. 사용자의 대화형 셸(zsh 또는 bash)에 정의된 sshy 별칭(alias) 추출 시도
+  local detected=""
+  if command -v zsh >/dev/null 2>&1; then
+    detected=$(zsh -i -c 'alias sshy' 2>/dev/null | sed -e "s/^sshy=//" -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+  fi
+  if [[ -z "$detected" ]] && command -v bash >/dev/null 2>&1; then
+    detected=$(bash -i -c 'alias sshy' 2>/dev/null | sed -e "s/^alias sshy=//" -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+  fi
+
+  if [[ -n "$detected" ]]; then
+    echo "$detected -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new"
+    return 0
+  fi
+
+  # 4. 기본 폴백: sshy 호스트 시도 후 실패 시 현재 사용자 또는 wonhyukc 계정으로 서버 IP 직접 접속
+  local default_user="${SSH_USER:-${USER:-wonhyukc}}"
+  echo "ssh -p 2222 -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new ${default_user}@45.115.154.229"
+}
+
 # ── 설정 ──────────────────────────────────────
-SSH_CMD="ssh -p 2222 -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new wonhyukc@45.115.154.229"
+SSH_CMD=$(resolve_ssh_cmd)
 DISK_WARN_THRESHOLD=80
 SSL_WARN_DAYS=14
 SSL_FAIL_DAYS=7
@@ -189,7 +227,13 @@ echo ""
 
 # ── SSH 접속 확인 ─────────────────────────────
 if ! $SSH_CMD "echo ok" >/dev/null 2>&1; then
-  result FAIL "SSH 접속" "접속 실패 — 방화벽 또는 키 인증 확인 필요"
+  result FAIL "SSH 접속" "접속 실패 — 방화벽, 키 인증 또는 sshy 설정 확인 필요"
+  echo ""
+  echo "  💡 SSH 접속 안내:"
+  echo "     현재 시도한 명령: $SSH_CMD"
+  echo "     • ~/.ssh/config 에 'Host sshy' 설정을 등록하거나,"
+  echo "     • 셸에 'alias sshy=...' 별칭을 등록하거나,"
+  echo "     • SSH_CMD='ssh -p 2222 사용자명@45.115.154.229' 환경변수를 전달하여 실행할 수 있습니다."
   echo ""
   exit 1
 fi
