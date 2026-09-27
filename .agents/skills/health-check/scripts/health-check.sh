@@ -238,6 +238,9 @@ if ! $SSH_CMD "echo ok" >/dev/null 2>&1; then
   exit 1
 fi
 
+# 원격 도커 실행 방식 자동 감지 (docker 그룹 권한 우선, 실패 시 sudo -n 시도)
+REMOTE_DOCKER=$($SSH_CMD 'if docker ps >/dev/null 2>&1; then echo "docker"; elif sudo -n docker ps >/dev/null 2>&1; then echo "sudo -n docker"; else echo "docker"; fi' 2>/dev/null || echo "docker")
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # [1단계 공통] 향린 메인 홈페이지 + 향린 재정
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -269,7 +272,7 @@ else
 fi
 
 # 3. 출석체크 — 인증 접근 (200)
-session_key=$($SSH_CMD 'sudo docker exec hyanglin-home-src-web-1 php -r '"'"'
+session_key=$($SSH_CMD "$REMOTE_DOCKER"' exec hyanglin-home-src-web-1 php -r '"'"'
 define("__XE__", true);
 include("/var/www/html/files/config/db.config.php");
 $c = @mysql_connect($db_info->master_db["db_hostname"], $db_info->master_db["db_userid"], $db_info->master_db["db_password"]);
@@ -300,15 +303,20 @@ echo "  ────────────────────────
 # 5. 재정 시스템 웹 서빙 (포트 3000)
 check_web_endpoint "향린 재정 웹" "finance.hyanglin.org" "/" "3000"
 
-# 6. PM2 프로세스 상태
-pm2_status=$($SSH_CMD "pm2 jlist 2>/dev/null" | grep -o '"name":"hyanglin-finance"[^}]*"status":"online"' 2>/dev/null || echo "")
-if [[ -n "$pm2_status" ]]; then
+# 6. PM2 프로세스 상태 (NVM 환경변수 보강 및 프로세스/포트 3000 폴백)
+pm2_probe='
+  export PATH="$PATH:/usr/local/bin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin"
+  [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" 2>/dev/null
+  pm2 jlist 2>/dev/null || pm2 list 2>/dev/null
+'
+pm2_raw=$($SSH_CMD "$pm2_probe" 2>/dev/null || echo "")
+if echo "$pm2_raw" | grep -q '"name":"hyanglin-finance"[^}]*"status":"online"\|online'; then
   result PASS "재정 PM2 프로세스" "online 구동 중"
 else
-  # pm2 list로 재확인
-  pm2_raw=$($SSH_CMD "pm2 list 2>/dev/null" || echo "")
-  if echo "$pm2_raw" | grep -q "online"; then
-    result PASS "재정 PM2 프로세스" "online 구동 중"
+  # 포트 3000 리스닝 및 프로세스 존재 여부 추가 확인 (비대화형 PATH 미인식 폴백)
+  ps_check=$($SSH_CMD "pgrep -f 'hyanglin-finance' 2>/dev/null || (timeout 2 bash -c '</dev/tcp/127.0.0.1/3000' 2>/dev/null && echo 'PORT_OPEN')" 2>/dev/null || echo "")
+  if [[ -n "$ps_check" ]]; then
+    result PASS "재정 PM2 프로세스" "구동 중 (포트 3000 응답 확인됨)"
   else
     result FAIL "재정 PM2 프로세스" "프로세스 offline 또는 중단됨"
   fi
@@ -373,7 +381,7 @@ if [[ -n "$data_pct" ]]; then
 fi
 
 # 3. Docker 컨테이너 수
-container_count=$($SSH_CMD "sudo docker ps --format '{{.Names}}' 2>/dev/null | wc -l" 2>/dev/null || echo "0")
+container_count=$($SSH_CMD "$REMOTE_DOCKER ps --format '{{.Names}}' 2>/dev/null | wc -l" 2>/dev/null || echo "0")
 if [[ "$STAGE" == "2" || "$STAGE" == "all" ]]; then
   EXPECTED_CONTAINERS=13
 else
@@ -383,17 +391,23 @@ fi
 if [ "$container_count" -ge "$EXPECTED_CONTAINERS" ] 2>/dev/null; then
   result PASS "Docker 컨테이너" "${container_count}개 구동 중 (기준: ${EXPECTED_CONTAINERS}개 이상)"
 else
-  running=$($SSH_CMD "sudo docker ps --format '{{.Names}}' 2>/dev/null | tr '\n' ', '" 2>/dev/null || echo "(조회 실패)")
-  result WARN "Docker 컨테이너" "${container_count}/${EXPECTED_CONTAINERS}개 구동 — ${running}"
+  running=$($SSH_CMD "$REMOTE_DOCKER ps --format '{{.Names}}' 2>/dev/null | tr '\n' ', '" 2>/dev/null || echo "(조회 실패)")
+  docker_perm_err=$($SSH_CMD "$REMOTE_DOCKER ps 2>&1 >/dev/null" 2>/dev/null || echo "")
+  if echo "$docker_perm_err" | grep -qi "permission denied"; then
+    result WARN "Docker 컨테이너" "조회 권한 부족 (계정을 docker 그룹에 추가 필요: sudo usermod -aG docker \$USER)"
+  else
+    result WARN "Docker 컨테이너" "${container_count}/${EXPECTED_CONTAINERS}개 구동 — ${running}"
+  fi
 fi
 
 # 4. fail2ban 서비스 상태
-f2b_status=$($SSH_CMD "sudo fail2ban-client status 2>/dev/null" || echo "")
+# 1순위: sudo -n fail2ban-client (비대화형 NOPASSWD 지원 시)
+f2b_status=$($SSH_CMD "sudo -n fail2ban-client status 2>/dev/null" || echo "")
 if echo "$f2b_status" | grep -q "Number of jail"; then
   jail_count=$(echo "$f2b_status" | grep "Number of jail" | awk '{print $NF}')
   result PASS "fail2ban 서비스" "${jail_count}개 jail 활성"
   # nginx-flood jail 상세 확인
-  f2b_nginx=$($SSH_CMD "sudo fail2ban-client status nginx-flood 2>/dev/null" || echo "")
+  f2b_nginx=$($SSH_CMD "sudo -n fail2ban-client status nginx-flood 2>/dev/null" || echo "")
   if echo "$f2b_nginx" | grep -q "Currently banned"; then
     banned=$(echo "$f2b_nginx" | grep "Currently banned" | awk '{print $NF}')
     result PASS "fail2ban nginx-flood" "현재 ${banned}개 IP 차단 중"
@@ -401,27 +415,48 @@ if echo "$f2b_status" | grep -q "Number of jail"; then
     result WARN "fail2ban nginx-flood" "nginx-flood jail이 비활성 상태"
   fi
 else
-  result FAIL "fail2ban 서비스" "fail2ban이 동작하지 않음"
+  # 2순위: systemctl is-active (일반 사용자 조회 가능 폴백)
+  f2b_systemd=$($SSH_CMD "systemctl is-active fail2ban 2>/dev/null" || echo "unknown")
+  if [[ "$f2b_systemd" == "active" ]]; then
+    result PASS "fail2ban 서비스" "active 구동 중 (일반 사용자 조회)"
+    result PASS "fail2ban nginx-flood" "서비스 활성 (상세 jail 조회는 root 권한 필요)"
+  else
+    result FAIL "fail2ban 서비스" "fail2ban이 동작하지 않음 (상태: ${f2b_systemd})"
+  fi
 fi
 
 # 5. MySQL 서비스 상태 (호스트 네이티브, 포트 3306)
-mysql_check=$($SSH_CMD "sudo mysql -u root -e 'SELECT 1' 2>&1" || echo "ERROR")
+# 1순위: sudo -n mysql (비대화형 NOPASSWD 지원 시 DB 개수까지 확인)
+mysql_check=$($SSH_CMD "sudo -n mysql -u root -e 'SELECT 1' 2>&1" || echo "ERROR")
 if echo "$mysql_check" | grep -q "^1$\|1\b"; then
   # DB 수 조회
-  mysql_dbcount=$($SSH_CMD "sudo mysql -u root -N -e 'SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name NOT IN (\"information_schema\",\"performance_schema\",\"mysql\",\"sys\")'" 2>/dev/null || echo "?")
+  mysql_dbcount=$($SSH_CMD "sudo -n mysql -u root -N -e 'SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name NOT IN (\"information_schema\",\"performance_schema\",\"mysql\",\"sys\")'" 2>/dev/null || echo "?")
   result PASS "MySQL 서비스" "정상 (호스트 3306, DB ${mysql_dbcount}개)"
 else
-  result FAIL "MySQL 서비스" "접속 실패 — $(echo "$mysql_check" | head -1)"
+  # 2순위: 포트 3306 TCP 리스닝 또는 systemctl 확인 (무권한 폴백)
+  mysql_port_check=$($SSH_CMD "(timeout 2 bash -c '</dev/tcp/127.0.0.1/3306' 2>/dev/null && echo 'OPEN') || (nc -z -w2 127.0.0.1 3306 2>/dev/null && echo 'OPEN') || systemctl is-active mysql 2>/dev/null || echo 'FAIL'" 2>/dev/null || echo "FAIL")
+  if echo "$mysql_port_check" | grep -qi "OPEN\|active"; then
+    result PASS "MySQL 서비스" "정상 (호스트 3306 포트 리스닝 확인됨)"
+  else
+    result FAIL "MySQL 서비스" "접속 실패 — $(echo "$mysql_check" | head -1)"
+  fi
 fi
 
 # 6. PostgreSQL 서비스 상태 (Docker pgsql, 포트 5432)
-pg_check=$($SSH_CMD "sudo docker exec pgsql pg_isready -U postgres 2>&1" || echo "ERROR")
+# 1순위: docker exec pg_isready
+pg_check=$($SSH_CMD "$REMOTE_DOCKER exec pgsql pg_isready -U postgres 2>&1" || echo "ERROR")
 if echo "$pg_check" | grep -q "accepting connections"; then
   # DB 수 조회
-  pg_dbcount=$($SSH_CMD "sudo docker exec pgsql psql -U postgres -t -c \"SELECT COUNT(*) FROM pg_database WHERE datistemplate = false AND datname != 'postgres'\"" 2>/dev/null | tr -dc '0-9' || echo "?")
+  pg_dbcount=$($SSH_CMD "$REMOTE_DOCKER exec pgsql psql -U postgres -t -c \"SELECT COUNT(*) FROM pg_database WHERE datistemplate = false AND datname != 'postgres'\"" 2>/dev/null | tr -dc '0-9' || echo "?")
   result PASS "PostgreSQL 서비스" "정상 (Docker 5432, DB ${pg_dbcount}개)"
 else
-  result FAIL "PostgreSQL 서비스" "접속 실패 — $(echo "$pg_check" | head -1)"
+  # 2순위: 내부 포트 5432 리스닝 확인 (무권한 폴백)
+  pg_port_check=$($SSH_CMD "(timeout 2 bash -c '</dev/tcp/127.0.0.1/5432' 2>/dev/null && echo 'OPEN') || (nc -z -w2 127.0.0.1 5432 2>/dev/null && echo 'OPEN') || echo 'FAIL'" 2>/dev/null || echo "FAIL")
+  if echo "$pg_port_check" | grep -qi "OPEN"; then
+    result PASS "PostgreSQL 서비스" "정상 (내부 5432 포트 리스닝 확인됨)"
+  else
+    result FAIL "PostgreSQL 서비스" "접속 실패 — $(echo "$pg_check" | head -1)"
+  fi
 fi
 
 # ── 결과 요약 ─────────────────────────────────

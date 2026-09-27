@@ -75,7 +75,7 @@ else
 fi
 
 # ── Docker 컨테이너 수 ─────────────────────────
-container_count=$(sudo docker ps --format '{{.Names}}' 2>/dev/null | wc -l)
+container_count=$( (docker ps --format '{{.Names}}' 2>/dev/null || sudo -n docker ps --format '{{.Names}}' 2>/dev/null) | wc -l)
 if [ "$container_count" -lt 13 ] 2>/dev/null; then
   WARN=$((WARN+1))
   FAIL_ITEMS+=("• Docker: ${container_count}/13개만 구동 중")
