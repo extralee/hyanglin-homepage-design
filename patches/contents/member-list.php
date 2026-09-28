@@ -1,41 +1,149 @@
-<?
+<?php
 include_once dirname(__FILE__)."/auth-guard.php";
 extract($_REQUEST);
 require "lib.php";
-$reg_date=time();
-$today=date("Ymd", $reg_date);
-if(!$connect) $connect=dbConn();
-if(!$view_type) $view_type=1;
-if(!$mode) $mode=3;
+$reg_date = time();
+$today = date("Ymd", $reg_date);
+if(!$connect) $connect = dbConn();
+
+// 1. 기준 주일 및 전체 주일 목록 계산 (최신순 25주 및 과거 기록 시작일 2025-08-10까지)
+function getPrevScheduleDate($dt) {
+    $w = (int)date('w', $dt);
+    $days = ($w == 0) ? 7 : $w;
+    $prev_sunday = strtotime("-{$days} days", $dt);
+    $year = (int)date('Y', $dt);
+    $xmas = strtotime("{$year}-12-25");
+    if ($xmas >= $dt) {
+        $xmas = strtotime(($year - 1)."-12-25");
+    }
+    if ($xmas > $prev_sunday) {
+        return $xmas;
+    }
+    return $prev_sunday;
+}
 
 if(!$sunday) {
-	if (date('w') == 0 || date('m-d') == '12-16') {  // 0 = 일요일
-		$sunday = date('Y-m-d');
-	} else {
-		$sunday = date('Y-m-d', strtotime('last sunday'));
-	}
+    if (date('w') == 0 || date('m-d') == '12-25') {
+        $cur_ts = strtotime(date('Y-m-d'));
+    } else {
+        $cur_ts = strtotime('last sunday');
+    }
+} else {
+    $cur_ts = strtotime($sunday);
 }
-$before_sunday = date('Y-m-d', strtotime($sunday . ' -7 days'));
-$next_sunday = date('Y-m-d', strtotime($sunday . ' +7 days'));
 
-$kinder_num=$child_num=$young_num=$school_total_num=$teacher_num=$parent_num=$program_num=$service_num=$etc_num=$extra_total_num=$all_total_num=0;
-$extra_main_num=$extra_sub_num=$extra_visit_num=$extra_sum_num=0;
+$origin_ts = strtotime('2025-08-10');
+$allDates = array();
+$loop_ts = $cur_ts;
+while ($loop_ts >= $origin_ts) {
+    $allDates[] = array(
+        'full' => date('Y-m-d', $loop_ts),
+        'short' => date('m.d', $loop_ts),
+        'is_xmas' => (date('m-d', $loop_ts) == '12-25')
+    );
+    $loop_ts = getPrevScheduleDate($loop_ts);
+}
+
+// 2. 전체 교인 목록 및 상세 데이터
+$allMembers = array();
+$memberDetailsMap = array();
+$m_res = mysql_query("SELECT no, name, category, subcategory, age_category, service_category, register_date, visit_date, memo, no_use FROM members ORDER BY name ASC", $connect);
+while ($m = mysql_fetch_assoc($m_res)) {
+    $no_str = (string)$m['no'];
+    $memberDetailsMap[$no_str] = $m;
+    if ($m['no_use'] == '0' && (int)$m['age_category'] < 10) {
+        $cate = '정'; $col = 'darkred';
+        if ($m['category'] == '2') { $cate = '준'; $col = 'darkgreen'; }
+        elseif ($m['category'] == '3') { $cate = '방'; $col = 'darkgray'; }
+        $allMembers[] = array(
+            'no' => $m['no'],
+            'name' => $m['name'],
+            'cate' => $cate,
+            'color' => $col,
+            'no_use' => (int)$m['no_use']
+        );
+    }
+}
+
+// 3. 전체 출석 데이터 매핑
+$attMap = array();
+$att_res = mysql_query("SELECT member_no, date, place FROM member_attendance", $connect);
+while ($r = mysql_fetch_assoc($att_res)) {
+    $p = (int)$r['place'];
+    $attMap[$r['member_no'].'-'.$r['date']] = ($p > 0) ? $p : 1;
+}
+
+// 4. 소속 카테고리
+$serviceCategories = array();
+$sc_res = mysql_query("SELECT srl, title FROM member_service_category WHERE title != '' ORDER BY srl ASC", $connect);
+while ($r = mysql_fetch_assoc($sc_res)) {
+    $serviceCategories[] = array('no' => $r['srl'], 'title' => $r['title']);
+}
+
+// 5. 주일별 통계 데이터 집계
+$weeklyStatsList = array();
+$stat_query = "SELECT 
+    a.date,
+    count(*) as total,
+    sum(case when a.place=1 then 1 else 0 end) as sanctuary,
+    sum(case when a.place>1 then 1 else 0 end) as outside,
+    sum(case when b.category=1 and a.place=1 then 1 else 0 end) as reg,
+    sum(case when b.category=2 and a.place=1 then 1 else 0 end) as sub,
+    sum(case when b.category=3 and a.place=1 then 1 else 0 end) as visit,
+    sum(case when a.place=2 then 1 else 0 end) as teacher,
+    sum(case when a.place=3 then 1 else 0 end) as parent,
+    sum(case when a.place=4 then 1 else 0 end) as prog,
+    sum(case when a.place=5 then 1 else 0 end) as serv,
+    sum(case when a.place=6 then 1 else 0 end) as etc,
+    sum(case when b.category=4 and b.subcategory=31 then 1 else 0 end) as kinder,
+    sum(case when b.category=4 and b.subcategory=32 then 1 else 0 end) as child,
+    sum(case when b.category=4 and b.subcategory=33 then 1 else 0 end) as young
+FROM member_attendance a LEFT JOIN members b ON a.member_no=b.no 
+WHERE a.date>='2025-08-10'
+GROUP BY a.date
+ORDER BY a.date DESC";
+$stat_res = mysql_query($stat_query, $connect);
+
+$online_map = array();
+$on_res = mysql_query("SELECT date, member_num FROM members_online", $connect);
+while ($on_row = mysql_fetch_assoc($on_res)) {
+    $online_map[$on_row['date']] = (int)$on_row['member_num'];
+}
+$unknown_map = array();
+$unk_res = mysql_query("SELECT date, member_num FROM members_unknown", $connect);
+while ($unk_row = mysql_fetch_assoc($unk_res)) {
+    $unknown_map[$unk_row['date']] = (int)$unk_row['member_num'];
+}
+
+while ($st = mysql_fetch_assoc($stat_res)) {
+    $dt = $st['date'];
+    $st['online'] = isset($online_map[$dt]) ? (string)$online_map[$dt] : '0';
+    $st['unknown'] = isset($unknown_map[$dt]) ? (string)$unknown_map[$dt] : '0';
+    $weeklyStatsList[] = $st;
+}
+
+// 6. viewResponses 초기화
+$viewResponses = array();
 ?>
 <!DOCTYPE html>
+<html lang="ko">
 <head>
-	<meta charset="utf-8">
-	<link rel="stylesheet" href="member-list-style.css?<?=$reg_date?>" />
-	<link rel="shortcut icon" href="http://www.hyanglin.org/home/files/attach/xeicon/favicon.ico" /><link rel="apple-touch-icon" href="http://www.hyanglin.org/home/files/attach/xeicon/mobicon.png" />
-	<script src="/common/js/jquery.min.js"></script>
+    <meta charset="utf-8">
+    <title>향린교회 주일 출석</title>
+    <link rel="stylesheet" href="member-list-style.css?<?=$reg_date?>" />
+    <link rel="shortcut icon" href="http://www.hyanglin.org/home/files/attach/xeicon/favicon.ico" />
+    <link rel="apple-touch-icon" href="http://www.hyanglin.org/home/files/attach/xeicon/mobicon.png" />
+    <script src="/common/js/jquery.min.js"></script>
 </head>
 <body>
+
 <div id="head">
-	<div id="title"><span class="title">향린교회 주일 출석<span></div>
-	<div id="sunday"><span id="before-sunday" class="arrow" title="이전 주일">◀</span> <span id="sunday-text"></span> <span id="next-sunday" class="arrow" title="다음 주일">▶</span></div>
-	<div id="add-icon"><img src="images/add-icon.png" title="교인 추가" style="cursor:pointer;"></div>
+	<div id="title"><span class="title">향린교회 주일 출석</span></div>
+	<div id="sunday"><span id="before-sunday" class="arrow" onclick="changeSunday(-1)" title="이전 주일">◀</span> <span id="sunday-text"><?=$allDates[0]['full']?></span> <span id="next-sunday" class="arrow" onclick="changeSunday(1)" title="다음 주일">▶</span></div>
+	<div id="add-icon" onclick="openMemberAddModal()" title="교인 추가"><img src="images/add-icon.png" title="교인 추가" style="cursor:pointer;"></div>
 	<div class="view_select">
-		<select id="view_select" name="view_select">
-			<option value="1">전체 이름순으로 보기</option>
+		<select id="view_select" name="view_select" onchange="onViewSelectChange()">
+			<option value="1" selected>전체 이름순으로 보기</option>
 			<option value="2">분류별로 보기</option>
 			<option value="3">교회학교 출석 현황</option>
 			<option value="4">소속별 출석 현황</option>
@@ -46,1028 +154,1335 @@ $extra_main_num=$extra_sub_num=$extra_visit_num=$extra_sum_num=0;
 			<option value="8">비노출 교인 명단</option>
 		</select>
 	</div>
-	<div id="online">온라인 예배 <input type='text' id='online_num' data-id='<?=$sunday?>' class='online_num' value='<?=$online_num?>'> 명</div>
-	<script>
-	$("#view_select").find('option[value="<?=$view_type?>"]').prop('selected', true);
-	</script>
+	<div id="online">온라인 예배 <input type="text" id="online_num" value="" oninput="onOnlineNumChange(this.value)"> 명</div>
 	<div id="mode-holder">
-		<div class="mode-icon" id="touch-mode"><img src="images/icon-touch.png" title="터치스크린 모드"></div>
-		<div class="mode-icon" id="edit-mode"><img src="images/icon-edit.png" title="편집 모드"></div>
-		<div class="mode-icon" id="lock-mode"><img src="images/icon-key.png" title="화면잠금 모드"></div>
+		<div class="mode-icon" id="touch-mode" onclick="modeSet(1)" title="터치스크린 모드"><img src="images/icon-touch.png" title="터치스크린 모드"></div>
+		<div class="mode-icon" id="edit-mode" onclick="modeSet(2)" title="편집 모드"><img src="images/icon-edit.png" title="편집 모드"></div>
+		<div class="mode-icon" id="lock-mode" onclick="modeSet(3)" title="화면잠금 모드"><img src="images/icon-key.png" title="화면잠금 모드"></div>
 	</div>
-	<div class="rotate-image"><img src="images/vertical-icon.png" title="화면 회전" onclick="rotateContainer();"></div>
-	<div class="fixed-image"><img src="images/fullscreen.png" title="전체 화면" onclick="enterFullscreen();"></div>
+	<div class="rotate-image" onclick="rotateContainer()" title="화면 회전"><img src="images/vertical-icon.png" title="화면 회전"></div>
+	<div class="fixed-image" onclick="enterFullscreen()" title="전체 화면"><img src="images/fullscreen.png" title="전체 화면"></div>
 </div>
 
+<div id="container-cover" style="display:none; position:fixed; top:80px; left:0; width:100%; height:100%; background:rgba(255,255,255,0.4); z-index:90;"></div>
+
 <div id="head_sub">
-<span class="head_top">예배실</span>
-<span class="head_sub">정회원 <span id="main_num" class="m_num"><?=$main_num?></span><span id="extra_main_num" class="extra_m_num"> (<?=$extra_main_num?>)</span></span>
-<span class="head_sub">| 준회원 <span id="sub_num" class="m_num"><?=$sub_num?></span><span id="extra_sub_num" class="extra_m_num"> (<?=$extra_sub_num?>)</span></span>
-<span class="head_sub">| 방문출석 <span id="visit_num" class="m_num"><?=$visit_num?></span><span id="extra_visit_num" class="extra_m_num"> (<?=$extra_visit_num?>)</span></span>
-<span class="head_sub" style="margin-right:0px;">| 미확인 <span id="unknown_num" class="m_num"><?=$unknown_num?></span></span>
-<span id="unknown-plus" class="known-arrow">▲</span>
-<span id="unknown-minus" class="known-arrow">▼</span>
-<span class="head_sub head_sub_total"> [계 <span id="total_num" class="m_num"><?=$total_num?></span><span id="extra_sum_num" class="extra_m_num"> (<?=$extra_sum_num?>)</span>]</span>
-<span class="head_top margin_left_10">예배실外</span>
-<span class="head_sub pointer" title="교회학교 교사">교사 <span id="teacher_num" class="m_num"><?=$teacher_num?></span></span>
-<span class="head_sub pointer" title="교회학교 학부모">| 학부모 <span id="parent_num" class="m_num"><?=$parent_num?></span></span>
-<span class="head_sub pointer" title="교회 프로그램 참여">| 프로그램 <span id="program_num" class="m_num"><?=$program_num?></span></span>
-<span class="head_sub pointer" title="봉사 & 업무">| 업무 <span id="service_num" class="m_num"><?=$service_num?></span></span>
-<span class="head_sub pointer" title="기타">| 기타 <span id="etc_num" class="m_num"><?=$etc_num?></span></span>
-<span class="head_sub head_sub_total"> [계 <span id="extra_total_num" class="m_num"><?=$extra_total_num?></span>]</span>
-<span class="head_top margin_left_10">교회학교</span>
-<span class="head_sub pointer" title="유아유치부">유 <span id="kinder_num" class="m_num"><?=$kinder_num?></span></span>
-<span class="head_sub pointer" title="어린이부">| 어 <span id="child_num" class="m_num"><?=$child_num?></span></span>
-<span class="head_sub pointer" title="청소년부">| 청 <span id="young_num" class="m_num"><?=$young_num?></span></span>
-<span class="head_sub head_sub_total"> [계 <span id="school_total_num" class="m_num"><?=$school_total_num?></span>]</span>
-<span class="m_num margin_left_10"> <총계 <span id="all_total_num" class="m_num"><?=$all_total_num?></span>></span>
+    <span class="head_top">예배실</span>
+    <span class="head_sub">정회원 <span id="main_num" class="m_num">103</span><span id="extra_main_num" class="extra_m_num"> (0)</span></span>
+    <span class="head_sub">| 준회원 <span id="sub_num" class="m_num">22</span><span id="extra_sub_num" class="extra_m_num"> (0)</span></span>
+    <span class="head_sub">| 방문출석 <span id="visit_num" class="m_num">2</span><span id="extra_visit_num" class="extra_m_num"> (0)</span></span>
+    <span class="head_sub" style="margin-right:0px;">| 미확인 <span id="unknown_num" class="m_num">19</span></span>
+    <span id="unknown-plus" class="known-arrow" onclick="changeUnknown(1)" title="미확인 1명 증가">▲</span>
+    <span id="unknown-minus" class="known-arrow" onclick="changeUnknown(-1)" title="미확인 1명 감소">▼</span>
+    <span class="head_sub head_sub_total"> [계 <span id="total_num" class="m_num">146</span><span id="extra_sum_num" class="extra_m_num"> (0)</span>]</span>
+    <span class="head_top margin_left_10">예배실外</span>
+    <span class="head_sub pointer" title="교회학교 교사">교사 <span id="teacher_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="교회학교 학부모">| 학부모 <span id="parent_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="교회 프로그램 참여">| 프로그램 <span id="program_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="봉사 & 업무">| 업무 <span id="service_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="기타">| 기타 <span id="etc_num" class="m_num">0</span></span>
+    <span class="head_sub head_sub_total"> [계 <span id="extra_total_num" class="m_num">0</span>]</span>
+    <span class="head_top margin_left_10">교회학교</span>
+    <span class="head_sub pointer" title="유아유치부">유 <span id="kinder_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="어린이부">| 어 <span id="child_num" class="m_num">0</span></span>
+    <span class="head_sub pointer" title="청소년부">| 청 <span id="young_num" class="m_num">0</span></span>
+    <span class="head_sub head_sub_total"> [계 <span id="school_total_num" class="m_num">0</span>]</span>
+    <span class="m_num margin_left_10"> 〈총계 <span id="all_total_num" class="m_num">146</span>〉</span>
 </div>
+
 <div id="head_sub2">
-<span class="head_sub"> ※ 1회 이상 예배 참석자만 표시됩니다. ●=예배실, ○=예배실외(교사, 학부모, 교회프로그램참여, 봉사&업무)</span>
+    <span id="head_sub2_text">※ 1회 이상 예배 참석자만 표시됩니다. ●=예배실, ○=예배실외(교사, 학부모, 교회프로그램참여, 봉사&업무)</span>
 </div>
-<div id='input_box' >
-<form method="post" action="member-ok.php" id="member_form" enctype="multipart/form-data">
-<table class='input_table' id='table_box' border=0 cellpadding=0 cellspacing=0>
-<input type='hidden' name='member_no' id='member_no'>
+
+<!-- ── [교인 정보 입력/수정 모달창] ── -->
+<div id="modal-backdrop" onclick="closeMemberModal()"></div>
+<div id="input_box">
+<form method="post" id="member_form" onsubmit="return false;">
+<table class="input_table" id="table_box" border="0" cellpadding="0" cellspacing="0">
+<input type="hidden" name="member_no" id="member_no">
 <tr class="tr_class">
-	<td  class='input_title'>이름<span class="necessary"> (필수)</span></td>
-	<td  class='input_td'><input type='text' name='member_name' id='member_name' class='input_box' maxlength="20" style='width:120px;'></td>
+	<td class="input_title">이름<span class="necessary"> (필수)</span></td>
+	<td class="input_td"><input type="text" name="member_name" id="member_name" class="input_box" maxlength="20" style="width:120px;"></td>
 </tr>
-<tr class="tr_class">
-	<td  class='input_title'>구분<span class="necessary"> (필수)</span></td>
-	<td  class='input_td'>
-		<input type='radio' name='category' id='category1' value='1'><label for="category1" class='input_tag2'> 정회원</label>
-		<input type='radio' name='category' id='category2' value='2'><label for="category2" class='input_tag2'> 준회원</label>
-		<input type='radio' name='category' id='category3' value='3'><label for="category3" class='input_tag2'> 방문교우</label>
-		<input type='radio' name='category' id='category4' value='4'><label for="category4" class='input_tag2'> 교회학교</label>
-		<button class="reset-btn" onclick="resetSpecificRadio('category', event)">미선택</button>
+<tr class="tr_class" id="tr_category">
+	<td class="input_title">구분<span class="necessary"> (필수)</span></td>
+	<td class="input_td">
+		<label class="input_tag2"><input type="radio" name="category" id="category1" value="1" onchange="onCategoryChange('1')"> 정회원</label>
+		<label class="input_tag2"><input type="radio" name="category" id="category2" value="2" onchange="onCategoryChange('2')"> 준회원</label>
+		<label class="input_tag2"><input type="radio" name="category" id="category3" value="3" onchange="onCategoryChange('3')"> 방문교우</label>
+		<label class="input_tag2"><input type="radio" name="category" id="category4" value="4" onchange="onCategoryChange('4')"> 교회학교</label>
+		<button type="button" class="reset-btn" onclick="resetSpecificRadio('category', event)">미선택</button>
 	</td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>신도회</td>
-	<td  class='input_td'>
-		<input type='radio' name='age_category' id='age_category1' value='1'><label for="age_category1" class='input_tag2'> 새날청년회</label>
-		<input type='radio' name='age_category' id='age_category2' value='2'><label for="age_category2" class='input_tag2'> 청년신도회</label>
-		<input type='radio' name='age_category' id='age_category3' value='3'><label for="age_category3" class='input_tag2'> 희년청년회</label></br>
-		<input type='radio' name='age_category' id='age_category4' value='4'><label for="age_category4" class='input_tag2'> 청년여신도회</label>
-		<input type='radio' name='age_category' id='age_category5' value='5'><label for="age_category5" class='input_tag2'> 청년남신도회</label></br>
-		<input type='radio' name='age_category' id='age_category6' value='6'><label for="age_category6" class='input_tag2'> 희년여신도회</label>
-		<input type='radio' name='age_category' id='age_category7' value='7'><label for="age_category7" class='input_tag2'> 희년남신도회</label></br>
-		<input type='radio' name='age_category' id='age_category8' value='8'><label for="age_category8" class='input_tag2'> 장년여신도회</label>
-		<input type='radio' name='age_category' id='age_category9' value='9'><label for="age_category9" class='input_tag2'> 장년남신도회</label></br>
-		<button class="reset-btn" onclick="resetSpecificRadio('age_category', event)">미선택</button>
+	<td class="input_title">신도회</td>
+	<td class="input_td">
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category1" value="1"> 새날청년회</label>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category2" value="2"> 청년신도회</label>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category3" value="3"> 희년청년회</label><br>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category4" value="4"> 청년여신도회</label>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category5" value="5"> 청년남신도회</label><br>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category6" value="6"> 희년여신도회</label>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category7" value="7"> 희년남신도회</label><br>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category8" value="8"> 장년여신도회</label>
+		<label class="input_tag2"><input type="radio" name="age_category" id="age_category9" value="9"> 장년남신도회</label><br>
+		<button type="button" class="reset-btn" onclick="resetSpecificRadio('age_category', event)">미선택</button>
 	</td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>소속</td>
-	<td  class='input_td'>
-	<div class='input_td' id="service_list" style="border:0">
-<?
-$result_input=mysql_query("SELECT no, title FROM `members_service_category` order by no");
-while($data=@mysql_fetch_array($result_input)) {
-	echo "<label for='service_category$data[no]' class='input_tag2'><input type='radio' name='service_category' class='service_category' id='service_category$data[no]' value='$data[no]'>$data[title]</label>";
-}
-?>
+	<td class="input_title">소속</td>
+	<td class="input_td">
+		<div class="input_td" id="service_list" style="border:0; padding:0;">
+			<label class="input_tag2"><input type="radio" name="service_category" id="service_category1" value="1"> 교역자</label>
+			<label class="input_tag2"><input type="radio" name="service_category" id="service_category2" value="2"> 직원</label>
+			<label class="input_tag2"><input type="radio" name="service_category" id="service_category3" value="3"> 교사</label>
+			<label class="input_tag2"><input type="radio" name="service_category" id="service_category4" value="4"> 성가대</label>
+			<label class="input_tag2"><input type="radio" name="service_category" id="service_category5" value="5"> 예향</label>
 		</div>
-		<button class="reset-btn" onclick="resetSpecificRadio('service_category', event)">미선택</button></br>
-		<span class="exp">소속 항목 추가</span> <input type='text' name='service_category_add' id='service_category_add' class='input_box' maxlength="16" style='width:100px;'>
-		<button type="button" id="service_category_add_button" class="button">추가</button>
+		<button type="button" class="reset-btn" onclick="resetSpecificRadio('service_category', event)">미선택</button><br>
+		<span class="exp">소속 항목 추가</span> <input type="text" name="service_category_add" id="service_category_add" class="input_box" maxlength="16" style="width:100px;">
+		<button type="button" id="service_category_add_button" class="btn-blue" onclick="addServiceCategory()">추가</button>
 	</td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>교인등록일</td>
-	<td  class='input_td'>
-		<input type='text' name='register_date' id='register_date' class='input_box' maxlength="8" style='width:100px;'><span class="exp">(예시-20250825)</span></br>
+	<td class="input_title">교인등록일</td>
+	<td class="input_td">
+		<input type="text" name="register_date" id="register_date" class="input_box" maxlength="8" style="width:100px;"><span class="exp">(예시-20250825)</span><br>
 		<span class="exp">연도만 입력시 1월 1일로 등록됨, 월까지 입력시 해당 월 1일로 등록됨</span>
 	</td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>방문일</td>
-	<td  class='input_td'>
-		<input type='text' name='visit_date' id='visit_date' class='input_box' maxlength="8" style='width:100px;'><span class="exp">(예시-20250825)</span></br>
+	<td class="input_title">방문일</td>
+	<td class="input_td">
+		<input type="text" name="visit_date" id="visit_date" class="input_box" maxlength="8" style="width:100px;"><span class="exp">(예시-20250825)</span><br>
 		<span class="exp">연도만 입력시 1월 1일로 등록됨, 월까지 입력시 해당 월 1일로 등록됨</span>
 	</td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>메모</td>
-	<td  class='input_td'><input type='text' name='memo' id='memo' class='input_box' maxlength="80" style='width:460px;'></td>
+	<td class="input_title">메모</td>
+	<td class="input_td"><input type="text" name="memo" id="memo" class="input_box" maxlength="80" style="width:460px;"></td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'>비노출</td>
-	<td  class='input_td'><label for='no_use' class='checkbox-container'><input type='checkbox' name='no_use' id='no_use' value='1'> <span class="exp" style="margin-left:10px">더 이상 일반 명부에 노출 안함</span></label></td>
+	<td class="input_title">비노출</td>
+	<td class="input_td"><label for="no_use" class="checkbox-container"><input type="checkbox" name="no_use" id="no_use" value="1"> <span class="exp" style="margin-left:10px">더 이상 일반 명부에 노출 안함</span></label></td>
 </tr>
 <tr class="tr_class">
-	<td  class='input_title'><button type="button" id="member_delete_button" class="button">삭제</button></td>
-	<td  class='input_td'>
-		<button type="button" id="member_close_button" class="button">창닫기</button>
-		<button type="button" id="member_ok_button" class="button">등록</button>
+	<td class="input_title"><button type="button" id="member_delete_button" onclick="deleteMember()">삭제</button></td>
+	<td class="input_td">
+		<button type="button" id="member_ok_button" onclick="saveMember()">등록</button>
+		<button type="button" id="member_close_button" onclick="closeMemberModal()">창닫기</button>
 	</td>
 </tr>
 </table>
 </form>
 </div>
 
-<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<div id="container">
-<div id="hidden-box"></div>
-<div id="hidden-place-box">
-	<input type='radio' name='place' id='place2' value='2'><label for="place2" class='input_tag2 place-text'> 교회학교 교사</label></br>
-	<input type='radio' name='place' id='place3' value='3'><label for="place3" class='input_tag2 place-text'> 교회학교 학부모</label></br>
-	<input type='radio' name='place' id='place4' value='4'><label for="place4" class='input_tag2 place-text'> 교회 프로그램 참여</label></br>
-	<input type='radio' name='place' id='place5' value='5'><label for="place5" class='input_tag2 place-text'> 봉사 & 업무</label></br>
-	<input type='radio' name='place' id='place6' value='6'><label for="place6" class='input_tag2 place-text'> 기타</label></br>
-	<input type='radio' name='place' id='place1' value='1'><label for="place1" class='input_tag2 place-text'> 선택 해제 (예베실)</label></br>
-	<button type="button" id="place_close_button" class="button">창닫기</button>
+<!-- 메인 스크롤 래퍼 -->
+<div id="table-wrapper">
+    <div id="hidden-box"></div>
+    <!-- view_type 5, 6, 7, 9용 테이블 -->
+    <div id="grid-view-container">
+        <div id="table-header" class="table-row"></div>
+        <div id="table-body"></div>
+    </div>
+    <!-- view_type 1, 2, 3, 4, 8용 타일 뷰 -->
+    <div id="tiles-container"></div>
 </div>
+
+<!-- ── 반투명 화살표 네비게이션 ── -->
+<div id="btn-prev" class="nav-arrow nav-arrow-left hidden" onclick="changePage(-1)" title="최신 날짜(앞선 25주) 보기">
+    <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    <span class="nav-arrow-text">최신쪽</span>
 </div>
-<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<div id="container-cover"></div>
+
+<div id="btn-next" class="nav-arrow nav-arrow-right" onclick="changePage(1)" title="과거 날짜(다음 25주) 계속 보기">
+    <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+    <span class="nav-arrow-text">과거쪽</span>
+</div>
+
 <script>
-var mode=<?=$mode?>; //처음에 Lock 모드로 설정
-var memberBoxHeight;
-var total_box_num=0;
-var this_sunday="<?=$sunday?>";
-var before_sunday="<?=$before_sunday?>";
-var next_sunday="<?=$next_sunday?>";
-var view_select=1;
-$("#touch-mode").click(function(){ modeSet(1); });
-$("#edit-mode").click(function(){ modeSet(2); });
-$("#lock-mode").click(function(){ modeSet(3); });
+var originDate = "2025-08-10";
+var allDates = <?=json_encode($allDates)?>;
+var allMembers = <?=json_encode($allMembers)?>;
+var attMap = <?=json_encode($attMap)?>;
+var viewResponses = <?=json_encode($viewResponses)?>;
+var memberDetailsMap = <?=json_encode($memberDetailsMap)?>;
+var serviceCategories = <?=json_encode($serviceCategories)?>;
+var weeklyStatsList = <?=json_encode($weeklyStatsList)?>;
 
-function modeSet(m) {
-	mode=m;
-	$("#container-cover").css("display", "none");
-	$("#touch-mode").css("background-color", "#ddd");
-	$("#edit-mode").css("background-color", "#ddd");
-	$("#lock-mode").css("background-color", "#ddd");
-	if(mode==1) $("#touch-mode").css("background-color", "#33ffff");
-	else if(mode==2) $("#edit-mode").css("background-color", "#33ffff");
-	else if(mode==3) {
-		$("#lock-mode").css("background-color", "#33ffff");
-		$("#container-cover").css("display", "block");
-	}
+var weeklyStatsMap = {};
+for (var i = 0; i < weeklyStatsList.length; i++) {
+    weeklyStatsMap[weeklyStatsList[i].date] = weeklyStatsList[i];
 }
 
-$("#before-sunday").click(function(){
-	members_get(view_select, before_sunday);
-});
-$("#next-sunday").click(function(){
-	members_get(view_select, next_sunday);
-});
+var curSundayIdx = 0;
+var curSunday = allDates[0].full; // 2026-09-27
 
-/*
-$("#view_select").change(function() {
-	var selectedValue = $(this).val();
-	view_select=selectedValue;
-	console.log("selectedValue-",selectedValue);
-	members_get(selectedValue, this_sunday);
-});
-*/
+var pageIndex = 0;
+var PAGE_SIZE = 25;
+var totalPages = Math.ceil(allDates.length / PAGE_SIZE); // 3 pages: 25 + 25 + 10 = 60 weeks
 
-
-function members_get(n,s) {
-	var view_type=n;
-	var sunday=s;
-	console.log("sunday--",sunday);
-	$.ajax({
-		url:"member-list-get-ajax.php",
-		type: "POST",   
-		data: { view_type:view_type, sunday:sunday },
-		dataType:'json',
-		success:function(data){
-			//console.log(data);
-			var cc=data.split('@@@');
-			$("#sunday-text"). text(sunday);
-			$("#online_num").val(cc[2]);
-			$("#main_num").text(cc[3]);
-			$("#sub_num").text(cc[4]);
-			$("#visit_num").text(cc[5]);
-			$("#unknown_num").text(cc[6]);
-			$("#total_num").text(cc[7]);
-			$("#kinder_num").text(cc[8]);
-			$("#child_num").text(cc[9]);
-			$("#young_num").text(cc[10]);
-			$("#school_total_num").text(cc[11]);
-
-			$("#teacher_num").text(cc[12]);
-			$("#parent_num").text(cc[13]);
-			$("#program_num").text(cc[14]);
-			$("#service_num").text(cc[15]);
-			$("#etc_num").text(cc[16]);
-			$("#extra_total_num").text(cc[17]);
-			$("#all_total_num").text(cc[18]);
-			
-			$("#extra_main_num").text("("+cc[19]+")");
-			$("#extra_sub_num").text("("+cc[20]+")");
-			$("#extra_visit_num").text("("+cc[21]+")");
-			$("#extra_sum_num").text("("+cc[22]+")");
-			
-			$("#container").children().not("#hidden-box, #hidden-place-box").remove();
-			this_sunday=sunday;
-			before_sunday=getSundayDates(sunday, 0);
-			next_sunday=getSundayDates(sunday, 1);
-			$('.member-name').remove();
-			$('.cate').remove();
-			$('#hidden-box').before(cc[0]);
-			total_box_num=cc[1];
-			//modeSet(mode);
-			boxHeightSet();
-			memberNameSet();
-			if(isFullScreen()) fullScreenBoxHeightSet();
-			if(view_type==5||view_type==6||view_type==9) {
-				console.log(cc[8]);
-				var aa=cc[23].split('#');
-				for(var k=0; k<aa.length; k++) {
-					var imsi=aa[k].split('^');
-					if(imsi[1]==1) $("#"+imsi[0]).text("●");
-					else $("#"+imsi[0]).text("○");
-				}
-				$("#head_sub").css("visibility","hidden");
-				$("#head_sub2").css("display","flex");
-				if(view_type==9) {
-					var c33 = cc[24] || "";
-					var c66 = cc[25] || "";
-					$("#head_sub2").html("※ 최근 25주(2026.04.12 - 2026.09.27) 출석률 30% 미만 교인 중 직전 25주 대비 가장 많이 낮아진 교인 25명 (비노출 교인 제외) <span style='color: #ffffff; font-weight: bold; margin-left: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.25);'>[최근 25주 출석률 33% 이상인 교인수 " + c33 + "명, 66% 이상인 교인수 " + c66 + "명]</span>");
-				} else {
-					$("#head_sub2").html("※ 1회 이상 예배 참석자만 표시됩니다. ●=예배실, ○=예배실외(교사, 학부모, 교회프로그램참여, 봉사&업무) &nbsp;(출석률은 화면에 보이는 25주의 출석률임)");
-				}
-				$("#container").css("overflow","auto");
-				modeSet(2);
-			} else if(view_type==7) {
-				//console.log(cc[0]);
-				$("#head_sub").css("visibility","hidden");
-				$("#head_sub2").css("display","flex").html("&nbsp;");
-				$("#container").css("overflow","auto");
-				modeSet(2);
-			} else if(view_type==8) {
-				console.log(cc[0]);
-				$("#head_sub").css("visibility","hidden");
-				$("#head_sub2").css("display","flex").html("&nbsp;");
-				$("#container").css("overflow","hidden");
-				modeSet(2);
-			} else {
-				$("#container").css("overflow","hidden");
-				$("#head_sub2").css("display","none");
-				$("#head_sub").css("visibility","visible");
-				modeSet(mode);
-			}
-
-		}
-	})
+// ── 상단 주일 이동 (◀, ▶ 화살표) ──
+function changeSunday(delta) {
+    var newIdx = curSundayIdx - delta; // ◀ 누르면 이전(과거, index 증가), ▶ 누르면 다음(최신, index 감소)
+    if (newIdx >= 0 && newIdx < allDates.length) {
+        curSundayIdx = newIdx;
+        curSunday = allDates[curSundayIdx].full;
+        document.getElementById("sunday-text").innerText = curSunday;
+        updateSundayStats();
+        
+        var curView = document.getElementById("view_select").value;
+        if (curView === "1" || curView === "2" || curView === "3" || curView === "4" || curView === "8") {
+            updateTileAttendanceForCurrentSunday();
+        }
+    }
 }
-members_get(1,"<?=$sunday?>");
 
-function getSundayDates(dateString, type) {
-    // 1. 입력 날짜 및 시간 정규화
-    const inputDate = new Date(dateString);
-    inputDate.setHours(0, 0, 0, 0);
-
-    // 2. 해당 연도의 성탄절 날짜 설정
-    const xmasDate = new Date(inputDate.getFullYear(), 11, 25); // 11월 아님, 11=12월
-    xmasDate.setHours(0, 0, 0, 0);
-
-    // 3. [기준] 달력상의 "진짜 일요일" 계산 (성탄절 고려 X)
-    const dayOfWeek = inputDate.getDay(); // 0:일요일
-    
-    // 3-1. 진짜 지난 일요일 (오늘이 일요일이면 7일 전)
-    const daysSince = dayOfWeek === 0 ? 7 : dayOfWeek;
-    let finalLast = new Date(inputDate);
-    finalLast.setDate(inputDate.getDate() - daysSince);
-
-    // 3-2. 진짜 다음 일요일 (오늘이 일요일이면 7일 후)
-    const daysUntil = dayOfWeek === 0 ? 7 : (7 - dayOfWeek);
-    let finalNext = new Date(inputDate);
-    finalNext.setDate(inputDate.getDate() + daysUntil);
-
-    // 4. [보정] 성탄절이 "진짜 일요일"과 "오늘" 사이에 끼어있는지 확인
-    // (오늘이 성탄절 당일이라면, 아래 조건문(부등호)에 걸리지 않아 "진짜 일요일"들이 그대로 유지됩니다)
-
-    // Case A: 지난 기준점 구하기
-    // "진짜 지난 일요일" < "성탄절" < "오늘" 이라면 -> 바로 직전 기준일은 성탄절이 됨
-    if (finalLast < xmasDate && xmasDate < inputDate) {
-        finalLast = new Date(xmasDate);
-    }
-
-    // Case B: 다음 기준점 구하기
-    // "오늘" < "성탄절" < "진짜 다음 일요일" 이라면 -> 바로 다음 기준일은 성탄절이 됨
-    if (inputDate < xmasDate && xmasDate < finalNext) {
-        finalNext = new Date(xmasDate);
-    }
-
-    // 5. 날짜 포맷팅 (YYYY-MM-DD, 로컬 타임존 보정)
-    const formatDate = (date) => {
-        const offset = date.getTimezoneOffset() * 60000;
-        return new Date(date.getTime() - offset).toISOString().split('T')[0];
-    };
-
-    // 6. 결과 반환
-    if (type === 0) {
-        return formatDate(finalLast);
-    } else if (type === 1) {
-        return formatDate(finalNext);
-    } else {
-        return {
-            last: formatDate(finalLast),
-            next: formatDate(finalNext),
-            lastDate: finalLast,
-            nextDate: finalNext
+// 주일 통계 수치 동기화
+function updateSundayStats() {
+    var stats = weeklyStatsMap[curSunday];
+    if (!stats) {
+        // 기본 계산
+        stats = {
+            reg: 0, sub: 0, visit: 0, unknown: 0,
+            teacher: 0, parent: 0, prog: 0, serv: 0, etc: 0,
+            kinder: 0, child: 0, young: 0, online: 0
         };
     }
+
+    document.getElementById("main_num").innerText = stats.reg || "0";
+    document.getElementById("sub_num").innerText = stats.sub || "0";
+    document.getElementById("visit_num").innerText = stats.visit || "0";
+    document.getElementById("unknown_num").innerText = stats.unknown || "0";
+    var totalNum = (parseInt(stats.reg) || 0) + (parseInt(stats.sub) || 0) + (parseInt(stats.visit) || 0) + (parseInt(stats.unknown) || 0);
+    document.getElementById("total_num").innerText = totalNum;
+
+    document.getElementById("teacher_num").innerText = stats.teacher || "0";
+    document.getElementById("parent_num").innerText = stats.parent || "0";
+    document.getElementById("program_num").innerText = stats.prog || "0";
+    document.getElementById("service_num").innerText = stats.serv || "0";
+    document.getElementById("etc_num").innerText = stats.etc || "0";
+    var extraTotal = (parseInt(stats.teacher) || 0) + (parseInt(stats.parent) || 0) + (parseInt(stats.prog) || 0) + (parseInt(stats.serv) || 0) + (parseInt(stats.etc) || 0);
+    document.getElementById("extra_total_num").innerText = extraTotal;
+
+    document.getElementById("kinder_num").innerText = stats.kinder || "0";
+    document.getElementById("child_num").innerText = stats.child || "0";
+    document.getElementById("young_num").innerText = stats.young || "0";
+    var schoolTotal = (parseInt(stats.kinder) || 0) + (parseInt(stats.child) || 0) + (parseInt(stats.young) || 0);
+    document.getElementById("school_total_num").innerText = schoolTotal;
+
+    document.getElementById("all_total_num").innerText = totalNum + extraTotal + schoolTotal;
+    document.getElementById("online_num").value = stats.online || "";
 }
 
-$("#member_close_button").click(function(){
-	$("#input_box").css("display", "none");
-	$("#member_form")[0].reset();
-	$("#member_no").val("");
-	$('#insert_tr1').remove();
-	$('#insert_tr2').remove();
-	$('#insert_tr3').remove();
-	$('#visit_date').val('');
+// ── 미확인 인원 증감 (▲, ▼ 화살표) ──
+function changeUnknown(delta) {
+    var unkEl = document.getElementById("unknown_num");
+    var cur = parseInt(unkEl.innerText) || 0;
+    var nextVal = cur + delta;
+    if (nextVal < 0) nextVal = 0;
+    unkEl.innerText = nextVal;
+
+    if (!weeklyStatsMap[curSunday]) weeklyStatsMap[curSunday] = {};
+    weeklyStatsMap[curSunday].unknown = nextVal;
+
+    var mainVal = parseInt(document.getElementById("main_num").innerText) || 0;
+    var subVal = parseInt(document.getElementById("sub_num").innerText) || 0;
+    var visitVal = parseInt(document.getElementById("visit_num").innerText) || 0;
+    var totalVal = mainVal + subVal + visitVal + nextVal;
+    document.getElementById("total_num").innerText = totalVal;
+
+    var extraTotal = parseInt(document.getElementById("extra_total_num").innerText) || 0;
+    var schoolTotal = parseInt(document.getElementById("school_total_num").innerText) || 0;
+    document.getElementById("all_total_num").innerText = totalVal + extraTotal + schoolTotal;
+
+    $.ajax({
+        type: "POST",
+        url: "member-unknown-ok.php",
+        data: { sunday: curSunday, num: delta },
+        dataType: "json"
+    });
+}
+
+// ── 온라인 예배 인원 입력 연동 ──
+function onOnlineNumChange(val) {
+    if (!weeklyStatsMap[curSunday]) weeklyStatsMap[curSunday] = {};
+    weeklyStatsMap[curSunday].online = val;
+
+    clearTimeout(window._onlineTimer);
+    window._onlineTimer = setTimeout(function() {
+        $.ajax({
+            type: "POST",
+            url: "member-online-ok.php",
+            data: { sunday: curSunday, num: val },
+            dataType: "json"
+        });
+    }, 400);
+}
+
+// ── 타일 뷰의 현재 주일 출석 마크 갱신 ──
+function updateTileAttendanceForCurrentSunday() {
+    var tiles = document.querySelectorAll("#tiles-container .member-name");
+    for (var i = 0; i < tiles.length; i++) {
+        var tile = tiles[i];
+        var mNo = tile.getAttribute("data-id");
+        if (!mNo) continue;
+        var key = mNo + "-" + curSunday;
+        var attVal = attMap[key];
+
+        tile.classList.remove("bg_color_black", "bg_color_gray");
+        if (attVal === 1) {
+            tile.classList.add("bg_color_black");
+        } else if (attVal >= 2 && attVal <= 6) {
+            tile.classList.add("bg_color_gray");
+        }
+    }
+}
+
+// ── 드롭다운 뷰 변경 ──
+function onViewSelectChange() {
+    var sel = document.getElementById("view_select").value;
+    var gridView = document.getElementById("grid-view-container");
+    var tilesView = document.getElementById("tiles-container");
+    var headSub1 = document.getElementById("head_sub");
+    var headSub2 = document.getElementById("head_sub2");
+    var subText = document.getElementById("head_sub2_text");
+    var tableWrapper = document.getElementById("table-wrapper");
+
+    if (sel === "5" || sel === "6") {
+        headSub1.style.display = "none";
+        headSub2.style.display = "flex";
+        subText.innerHTML = "※ 1회 이상 예배 참석자만 표시됩니다. ●=예배실, ○=예배실외(교사, 학부모, 교회프로그램참여, 봉사&업무) &nbsp;(출석률은 화면에 보이는 25주의 출석률임)";
+        tableWrapper.style.top = "75px";
+        gridView.style.display = "block";
+        tilesView.style.display = "none";
+    } else if (sel === "7" || sel === "8") {
+        headSub1.style.display = "none";
+        headSub2.style.display = "flex";
+        subText.innerHTML = "&nbsp;";
+        tableWrapper.style.top = "75px";
+        if (sel === "7") {
+            gridView.style.display = "block";
+            tilesView.style.display = "none";
+        } else {
+            gridView.style.display = "none";
+            tilesView.style.display = "block";
+        }
+    } else if (sel === "9") {
+        var countOneThird = 0;
+        var countTwoThirds = 0;
+        var recent25 = allDates.slice(0, 25);
+        for (var i = 0; i < allMembers.length; i++) {
+            var mNo = allMembers[i].no;
+            var attCount = 0;
+            for (var j = 0; j < recent25.length; j++) {
+                var d = recent25[j].full;
+                var key = mNo + "-" + d;
+                var val = attMap[key];
+                if (val && (val >= 1 && val <= 6)) {
+                    attCount++;
+                }
+            }
+            var rate = attCount / 25.0;
+            if (rate >= (1.0 / 3.0)) {
+                countOneThird++;
+            }
+            if (rate >= (2.0 / 3.0)) {
+                countTwoThirds++;
+            }
+        }
+
+        headSub1.style.display = "none";
+        headSub2.style.display = "flex";
+        subText.innerHTML = "※ 최근 25주(2026.04.12 - 2026.09.27) 출석률 30% 미만 교인 중 직전 25주 대비 가장 많이 낮아진 교인 25명 (비노출 교인 제외) " +
+                            "<span style='color: #ffffff; font-weight: bold; margin-left: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.25);'>[최근 25주 출석률 33% 이상인 교인수 " + countOneThird + "명, 66% 이상인 교인수 " + countTwoThirds + "명]</span>";
+        tableWrapper.style.top = "75px";
+        gridView.style.display = "block";
+        tilesView.style.display = "none";
+    } else {
+        headSub1.style.display = "flex";
+        headSub2.style.display = "none";
+        tableWrapper.style.top = "80px";
+        gridView.style.display = "none";
+        tilesView.style.display = "block";
+    }
+
+    tableWrapper.scrollTop = 0;
+    var cover = document.getElementById("container-cover");
+    if (cover && mode === 3) {
+        cover.style.top = tableWrapper.style.top;
+        cover.style.display = "block";
+    }
+    renderTable();
+}
+
+// ── 헤더 우측 5개 버튼 원래 기능 구현 ──
+var mode = 1; // 1: 터치스크린 모드, 2: 편집 모드, 3: 화면잠금 모드
+
+function modeSet(m) {
+    mode = m;
+    var cover = document.getElementById("container-cover");
+    var touch = document.getElementById("touch-mode");
+    var edit = document.getElementById("edit-mode");
+    var lock = document.getElementById("lock-mode");
+
+    if (cover) cover.style.display = "none";
+    if (touch) touch.style.backgroundColor = "#ddd";
+    if (edit) edit.style.backgroundColor = "#ddd";
+    if (lock) lock.style.backgroundColor = "#ddd";
+
+    if (mode === 1) {
+        if (touch) touch.style.backgroundColor = "#33ffff";
+    } else if (mode === 2) {
+        if (edit) edit.style.backgroundColor = "#33ffff";
+    } else if (mode === 3) {
+        if (lock) lock.style.backgroundColor = "#33ffff";
+        if (cover) {
+            var currentView = document.getElementById("view_select").value;
+            if (currentView === "1" || currentView === "2" || currentView === "3" || currentView === "4") {
+                cover.style.top = "80px";
+            } else {
+                cover.style.top = "75px";
+            }
+            cover.style.display = "block";
+        }
+    }
+}
+
+// Shift 키 누름/뗌 시 터치(1) <-> 편집(2) 모드 전환
+var isShiftPressed = false;
+document.addEventListener("keydown", function(e) {
+    if (e.shiftKey && !isShiftPressed) {
+        isShiftPressed = true;
+        if (mode === 1) modeSet(2);
+        else if (mode === 2) modeSet(1);
+    }
+});
+document.addEventListener("keyup", function(e) {
+    if (e.key === "Shift") {
+        isShiftPressed = false;
+    }
 });
 
-$("#place_close_button").click(function(){
-	//console.log("place_close_button");
-	$('input[name="place"]').prop('checked', false);
-	$("#hidden-place-box").css("display", "none");
-});
+// ── [교인 정보 입력 및 수정 모달 기능 완벽 구현] ──
+function openMemberAddModal() {
+    document.getElementById("member_form").reset();
+    document.getElementById("member_no").value = "";
+    document.getElementById("member_delete_button").style.display = "none";
+    document.getElementById("member_ok_button").innerText = "등록";
+    removeInsertRows();
+    document.getElementById("modal-backdrop").style.display = "block";
+    document.getElementById("input_box").style.display = "block";
+}
 
-$("#member_delete_button").click(function(){
-	var no=$("#member_no").val();
-	var name=$("#member_name").val();
-	if (confirm(name+" 님을 삭제하시겠습니까?")) {
-		console.log(no);
-		$.ajax({
-			url:"member-delete.php",
-			type: "POST",   
-			data: { no:no },
-			dataType:'json',
-			success:function(data){
-				if(data>0) {
-					$('div[data-id="'+data+'"]').css('display', 'none');
-					$("#input_box").css("display", "none");
-					$("#member_form")[0].reset();
-					$("#member_no").val("");
-					$('#insert_tr1').remove();
-					$('#insert_tr2').remove();
-					$('#insert_tr3').remove();
-					$('#visit_date').val('');
-				} else {
-					alert("삭제에 실패했습니다. 다시 시도해 주십시요.");
-				}
-			}
-		})
-	}
-});
+function openMemberEditModal(memberNo) {
+    var member = memberDetailsMap[memberNo];
+    if (!member) {
+        for (var i = 0; i < allMembers.length; i++) {
+            if (String(allMembers[i].no) === String(memberNo)) {
+                member = allMembers[i];
+                break;
+            }
+        }
+    }
+    if (!member) return;
 
-$("#category1").change(function() {
-	if ($(this).is(':checked')) {
-		$('#insert_tr1').remove();
-		$('#insert_tr2').remove();
-		$('#insert_tr3').remove();
-		$('#visit_date').val('');
-	}
-});
+    document.getElementById("member_form").reset();
+    removeInsertRows();
 
-$("#category2").change(function() {
-	if ($(this).is(':checked')) {
-		$('#insert_tr2').remove();
-		$('#insert_tr3').remove();
-		$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr1'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory1' class='input_tag2'><input type='radio' name='subcategory' id='subcategory1' value='1'>미세례</label><label for='subcategory2' class='input_tag2'><input type='radio' name='subcategory' id='subcategory2' value='2'>유아세례</label><label for='subcategory3' class='input_tag2'><input type='radio' name='subcategory' id='subcategory3' value='3'>미가입식</label><label for='subcategory4' class='input_tag2'><input type='radio' name='subcategory' id='subcategory4' value='4'>병역</label><label for='subcategory5' class='input_tag2'><input type='radio' name='subcategory' id='subcategory5' value='5'>해외</label><label for='subcategory6' class='input_tag2'><input type='radio' name='subcategory' id='subcategory6' value='6'>지방</label><label for='subcategory7' class='input_tag2'><input type='radio' name='subcategory' id='subcategory7' value='7'>교우</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-		$('#visit_date').val('');
-	}
-});
-$("#category3").change(function() {
-	if ($(this).is(':checked')) {
-		$('#insert_tr1').remove();
-		$('#insert_tr3').remove();
-		$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr2'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory10' class='input_tag2'><input type='radio' name='subcategory' id='subcategory10' value='10'>2023년</label><label for='subcategory11' class='input_tag2'><input type='radio' name='subcategory' id='subcategory11' value='11'>2024년</label><label for='subcategory12' class='input_tag2'><input type='radio' name='subcategory' id='subcategory12' value='12' checked>2025년</label><label for='subcategory13' class='input_tag2'><input type='radio' name='subcategory' id='subcategory13' value='13'>2026년</label><label for='subcategory14' class='input_tag2'><input type='radio' name='subcategory' id='subcategory14' value='14'>2027년</label><label for='subcategory15' class='input_tag2'><input type='radio' name='subcategory' id='subcategory15' value='15'>2028년</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-		$('#visit_date').val(getLastSundayYmd());
-	}
-});
-$("#category4").change(function() {
-	if ($(this).is(':checked')) {
-		$('#insert_tr1').remove();
-		$('#insert_tr2').remove();
-		$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr3'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory31' class='input_tag2'><input type='radio' name='subcategory' id='subcategory31' value='31'>유아유치부</label><label for='subcategory32' class='input_tag2'><input type='radio' name='subcategory' id='subcategory32' value='32'>어린이부</label><label for='subcategory33' class='input_tag2'><input type='radio' name='subcategory' id='subcategory33' value='33'>청소년부</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-		$('#visit_date').val('');
-	}
-});
+    document.getElementById("member_no").value = member.no || memberNo;
+    document.getElementById("member_name").value = member.name || "";
+
+    // 구분 라디오 설정
+    var catVal = String(member.category || "1");
+    var catRadio = document.querySelector('input[name="category"][value="' + catVal + '"]');
+    if (catRadio) catRadio.checked = true;
+    onCategoryChange(catVal);
+
+    // 서브카테고리 라디오 설정
+    var subVal = String(member.subcategory || "");
+    if (subVal) {
+        var subRadio = document.querySelector('input[name="subcategory"][value="' + subVal + '"]');
+        if (subRadio) subRadio.checked = true;
+    }
+
+    // 신도회 라디오 설정
+    var ageVal = String(member.age_category || "");
+    if (ageVal && ageVal !== "0") {
+        var ageRadio = document.querySelector('input[name="age_category"][value="' + ageVal + '"]');
+        if (ageRadio) ageRadio.checked = true;
+    }
+
+    // 소속 라디오 설정
+    var srvVal = String(member.service_category || "");
+    if (srvVal && srvVal !== "0") {
+        var srvRadio = document.querySelector('input[name="service_category"][value="' + srvVal + '"]');
+        if (srvRadio) srvRadio.checked = true;
+    }
+
+    // 날짜 및 메모
+    var regDate = member.register_date ? String(member.register_date).replace(/-/g, "") : "";
+    document.getElementById("register_date").value = regDate;
+
+    var visDate = member.visit_date ? String(member.visit_date).replace(/-/g, "") : "";
+    document.getElementById("visit_date").value = visDate;
+
+    document.getElementById("memo").value = member.memo || "";
+    document.getElementById("no_use").checked = (String(member.no_use) === "1");
+
+    document.getElementById("member_delete_button").style.display = "inline-block";
+    document.getElementById("member_ok_button").innerText = "수정";
+
+    document.getElementById("modal-backdrop").style.display = "block";
+    document.getElementById("input_box").style.display = "block";
+}
+
+function closeMemberModal() {
+    document.getElementById("modal-backdrop").style.display = "none";
+    document.getElementById("input_box").style.display = "none";
+    document.getElementById("member_form").reset();
+    removeInsertRows();
+}
+
+function removeInsertRows() {
+    var r1 = document.getElementById("insert_tr1");
+    var r2 = document.getElementById("insert_tr2");
+    var r3 = document.getElementById("insert_tr3");
+    if (r1) r1.remove();
+    if (r2) r2.remove();
+    if (r3) r3.remove();
+}
+
+function onCategoryChange(catVal) {
+    removeInsertRows();
+    var trCategory = document.getElementById("tr_category");
+
+    if (catVal === "2") {
+        // 준회원 서브카테고리 행
+        var tr = document.createElement("tr");
+        tr.className = "tr_class";
+        tr.id = "insert_tr1";
+        tr.innerHTML = '<td class="input_td" colspan="2" style="padding-left:95px;">' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory1" value="1">미세례</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory2" value="2">유아세례</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory3" value="3">미가입식</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory4" value="4">병역</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory5" value="5">해외</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory6" value="6">지방</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory7" value="7">교우</label>' +
+            '<button type="button" class="reset-btn" onclick="resetSpecificRadio(\'subcategory\', event)">미선택</button>' +
+            '</td>';
+        trCategory.after(tr);
+        document.getElementById("visit_date").value = "";
+    } else if (catVal === "3") {
+        // 방문교우 연도 선택 행
+        var tr = document.createElement("tr");
+        tr.className = "tr_class";
+        tr.id = "insert_tr2";
+        tr.innerHTML = '<td class="input_td" colspan="2" style="padding-left:95px;">' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory10" value="10">2023년</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory11" value="11">2024년</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory12" value="12">2025년</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory13" value="13" checked>2026년</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory14" value="14">2027년</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory15" value="15">2028년</label>' +
+            '<button type="button" class="reset-btn" onclick="resetSpecificRadio(\'subcategory\', event)">미선택</button>' +
+            '</td>';
+        trCategory.after(tr);
+        document.getElementById("visit_date").value = curSunday.replace(/-/g, "");
+    } else if (catVal === "4") {
+        // 교회학교 부서 선택 행
+        var tr = document.createElement("tr");
+        tr.className = "tr_class";
+        tr.id = "insert_tr3";
+        tr.innerHTML = '<td class="input_td" colspan="2" style="padding-left:95px;">' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory31" value="31">유아유치부</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory32" value="32">어린이부</label>' +
+            '<label class="input_tag2"><input type="radio" name="subcategory" id="subcategory33" value="33">청소년부</label>' +
+            '<button type="button" class="reset-btn" onclick="resetSpecificRadio(\'subcategory\', event)">미선택</button>' +
+            '</td>';
+        trCategory.after(tr);
+        document.getElementById("visit_date").value = "";
+    } else {
+        document.getElementById("visit_date").value = "";
+    }
+}
+
 function resetSpecificRadio(groupName, event) {
-    // 이벤트 전파 중단
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
-    const radios = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
-    radios.forEach(radio => {
-        radio.checked = false;
-    });
-	if(groupName!='subcategory') {
-		$('#insert_tr1').remove();
-		$('#insert_tr2').remove();
-		$('#visit_date').val('');
-	}
-}
-
-$("#online_num").on('input', function() {
-	var $element = $(this);
-	var num = $element.val();
-	$.ajax({
-		url:"member-online-ok.php",
-		type: "POST",   
-		data: { sunday:this_sunday, num:num },
-		dataType:'json',
-		success:function(data){
-			console.log("ok");
-		}
-	})
-});
-
-$("#unknown-plus").click(function(){
-	var changeNum = 1;
-	$.ajax({
-		url:"member-unknown-ok.php",
-		type: "POST",   
-		data: { sunday:this_sunday, num:changeNum },
-		dataType:'json',
-		success:function(data){
-			var cc=data.split('@@@');
-			$("#main_num").text(cc[0]);
-			$("#sub_num").text(cc[1]);
-			$("#visit_num").text(cc[2]);
-			$("#unknown_num").text(cc[3]);
-			$("#total_num").text(cc[4]);
-
-			$("#teacher_num").text(cc[5]);
-			$("#parent_num").text(cc[6]);
-			$("#program_num").text(cc[7]);
-			$("#service_num").text(cc[8]);
-			$("#etc_num").text(cc[9]);
-			$("#extra_total_num").text(cc[10]);
-			$("#all_total_num").text(cc[11]);
-
-			$("#extra_main_num").text("("+cc[12]+")");
-			$("#extra_sub_num").text("("+cc[13]+")");
-			$("#extra_visit_num").text("("+cc[14]+")");
-			$("#extra_sum_num").text("("+cc[15]+")");
-
-		}
-	})
-});
-
-$("#unknown-minus").click(function(){
-	var changeNum = -1;
-	$.ajax({
-		url:"member-unknown-ok.php",
-		type: "POST",   
-		data: { sunday:this_sunday, num:changeNum },
-		dataType:'json',
-		success:function(data){
-			var cc=data.split('@@@');
-			$("#main_num").text(cc[0]);
-			$("#sub_num").text(cc[1]);
-			$("#visit_num").text(cc[2]);
-			$("#unknown_num").text(cc[3]);
-			$("#total_num").text(cc[4]);
-
-			$("#teacher_num").text(cc[5]);
-			$("#parent_num").text(cc[6]);
-			$("#program_num").text(cc[7]);
-			$("#service_num").text(cc[8]);
-			$("#etc_num").text(cc[9]);
-			$("#extra_total_num").text(cc[10]);
-			$("#all_total_num").text(cc[11]);
-
-			$("#extra_main_num").text("("+cc[12]+")");
-			$("#extra_sub_num").text("("+cc[13]+")");
-			$("#extra_visit_num").text("("+cc[14]+")");
-			$("#extra_sum_num").text("("+cc[15]+")");
-		}
-	})
-});
-
-function isFullScreen() {
-    return !!(document.fullscreenElement || 
-              document.webkitFullscreenElement || 
-              document.mozFullScreenElement || 
-              document.msFullscreenElement);
-}
-
-$("#view_select").change(function() {
-	var selectedValue = $(this).val();
-	view_select=selectedValue;
-	console.log("selectedValue-",selectedValue);
-	members_get(selectedValue, this_sunday);
-});
-function enterFullscreen() {
-	if(document.fullscreenElement) {
-		const $container = $('#container');
-		if ($container.hasClass('rotated')) {
-			rotateContainer();
-		}
-		exitFullscreen();
-	} else {
-		const element = document.documentElement;
-		if (element.requestFullscreen) {
-			element.requestFullscreen();
-		} else if (element.webkitRequestFullscreen) { // Safari
-			element.webkitRequestFullscreen();
-		} else if (element.msRequestFullscreen) { // IE/Edge
-			element.msRequestFullscreen();
-		} else if (element.mozRequestFullScreen) { // Firefox
-			element.mozRequestFullScreen();
-		}
-	}
-	fullScreenBoxHeightSet();
-}
-function exitFullscreen() {
-	if (document.exitFullscreen) {
-		document.exitFullscreen();
-	} else if (document.webkitExitFullscreen) { // Safari
-		document.webkitExitFullscreen();
-	} else if (document.msExitFullscreen) { // IE/Edge
-		document.msExitFullscreen();
-	} else if (document.mozCancelFullScreen) { // Firefox
-		document.mozCancelFullScreen();
-	}
-	//location.reload();
-}
-
-document.addEventListener('keydown', function(event) {
-	if (event.key === 'Escape') {
-		console.log('ESC 키가 눌렸습니다. 전체화면에서 나갑니다.');
-	}
-});
-
-function getRotationDegrees(obj) {
-	var matrix = obj.css("transform");
-	if (matrix === 'none') return 0;
-	var values = matrix.split('(')[1].split(')')[0].split(',');
-	var a = values[0];
-	var b = values[1];
-	var angle = Math.round(Math.atan2(b, a) * (180/Math.PI));
-    return angle < 0 ? angle + 360 : angle;
-}
-
-function fullScreenBoxHeightSet() {
-	const $container = $('#container');
-	const screenHeight = screen.height;
-	const screenWidth = screen.width;
-	 if (!$container.hasClass('rotated')) {
-		var totalRows = Math.ceil(total_box_num/25);
-		const containerHeight = screenHeight -80;
-		const containerWidth = screenWidth;
-		var newBoxHeight = containerHeight / totalRows;
-		memberBoxHeight=newBoxHeight;
-		if(newBoxHeight>80) newBoxHeight=80;
-		$(".member-name").css("height", newBoxHeight);
-		$(".member-name").css("width", "4%");
-		$(".cate").css("height", newBoxHeight);
-		$(".cate").css("width",  "4%");
-	} else {
-		var totalRows = Math.ceil(total_box_num/14);
-		const containerHeight = screenWidth;
-		const containerWidth = screenHeight;
-		var newBoxHeight = containerHeight / totalRows;
-		memberBoxHeight=newBoxHeight;
-		if(newBoxHeight>80) newBoxHeight=80;
-		$(".member-name").css("height", newBoxHeight);
-		$(".member-name").css("width", "7.1%");
-		$(".cate").css("height", newBoxHeight);
-		$(".cate").css("width", "7.1%");
-	}	
-}
-
-function rotateContainer() {
-	if(document.fullscreenElement) {
-		const $container = $('#container');
-		const screenWidth = $(window).width();
-		const screenHeight = $(window).height()-80;
-		
-		if (!$container.hasClass('rotated')) {
-			const translateX = (screenWidth - screenHeight) / 2;
-			const translateY = (screenHeight - screenWidth) / 2;
-			
-			$container.css({
-				'transform': `translate(${translateX}px, ${translateY}px) rotate(-90deg)`,
-				'width': screenHeight + 'px',
-				'height': screenWidth + 'px'
-			}).addClass('rotated');
-		} else {
-			$container.css({
-				'transform': 'none',
-				'width': '100vw',
-				'height': '100vh'
-			}).removeClass('rotated');
-		}
-		fullScreenBoxHeightSet();
-	} else {
-		alert("전체 화면에서 회전할 수 있습니다.");
-	}
-}
-var thisSelectedMemberNo;
-function memberNameSet() {
-    $(".member-name").click(function(e) {
-		if(mode==1) {
-			var $element = $(this);
-			var textValue = $element.text().replace(/\s+/g, '');
-			var memberNo = $element.data('id');
-			var memberPlace = $element.data('place');
-			var sunday = this_sunday;
-			
-			$("#hidden-box").css({"display": "flex", "white-space":"nowrap", "word-break":"keep-all", "overflow":"hidden"});
-			var x = e.pageX - 200;
-			var y = e.pageY - 170;
-			var rotation = getRotationDegrees($("#container"));
-			
-			if(y > -100) $("#hidden-box").css({"display":"flex", "white-space":"nowrap", "word-break":"keep-all", "overflow":"hidden"}).text(textValue);
-			
-			if(rotation == 0) {
-				if(x < 0) x = 0;
-				if(y < 0) y = 0;
-				//$("#hidden-box").css({"width": "380px", "height":"200px", "font-size":"6rem", "padding":"40px 0"});
-				$("#hidden-box").css({"width": "380px", "height":"200px", "font-size":"6rem", "display":"flex" });
-				if(x + 380 > $("#container").width()) x = $("#container").width() - 380;
-				if(y + 200 > $("#container").height()) y = $("#container").height() - 200;
-				y = y + $("#container").scrollTop();
-				$("#hidden-box").css({"top": y + "px", "left": x + "px"});
-			} else {
-				var c_width=$("#container").width();
-				//var c_height=c_width*200/380;
-				var c_height=$("#container").height()+100;
-				//$("#hidden-box").css({"width": c_width+"px", "height":c_height+"px", "font-size":"15rem", "padding":"160px 0"});
-				$("#hidden-box").css({"width": c_width+"px", "height":c_height+"px", "font-size":"15rem", "display":"flex"});
-				$("#hidden-box").css({"top": "0px", "left":"0px"});
-			}
-			$.ajax({
-				url:"member-attendance-ok.php",
-				type: "POST",   
-				data: { memberNo:memberNo, sunday:sunday },
-				dataType:'json',
-				success:function(data){
-					var cc=data.split('@@@');
-					if(cc[0]>0) {
-						$("#hidden-box").fadeOut(1000);
-						$element.removeClass().addClass("member-name bg_color_black");
-						$element.data('place', 'place_1');
-					} else {
-						$("#hidden-box").fadeOut(300);
-						$element.removeClass().addClass("member-name bg_color0");
-						$element.data('place', 'place_');
-					}
-					$("#main_num").text(cc[1]);
-					$("#sub_num").text(cc[2]);
-					$("#visit_num").text(cc[3]);
-					$("#unknown_num").text(cc[4]);
-					$("#total_num").text(cc[5]);
-					$("#kinder_num").text(cc[6]);
-					$("#child_num").text(cc[7]);
-					$("#young_num").text(cc[8]);
-					$("#school_total_num").text(cc[9]);
-
-					$("#teacher_num").text(cc[10]);
-					$("#parent_num").text(cc[11]);
-					$("#program_num").text(cc[12]);
-					$("#service_num").text(cc[13]);
-					$("#etc_num").text(cc[14]);
-					$("#extra_total_num").text(cc[15]);
-					$("#all_total_num").text(cc[16]);
-
-					$("#extra_main_num").text("("+cc[17]+")");
-					$("#extra_sub_num").text("("+cc[18]+")");
-					$("#extra_visit_num").text("("+cc[19]+")");
-					$("#extra_sum_num").text("("+cc[20]+")");
-				}
-			})
-		} else if(mode==2) { //편집 모드
-				$("#input_box").css("display", "block");
-				var memberNo = $(this).data('id');
-				$.ajax({
-					url:"member-get-data.php",
-					type: "POST",   
-					data: { memberNo:memberNo },
-					dataType:'json',
-					success:function(data){
-						var cc=data.split('@@@');
-						$("#member_no").val(cc[0]);
-						$("#member_name").val(cc[1]);
-						var categoryValue = cc[2];
-						$('input[name="category"][value="' + categoryValue + '"]').prop('checked', true);
-						var subcategoryValue = cc[3];
-						if(subcategoryValue>0&&subcategoryValue<10) {
-							$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr1'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory1' class='input_tag2'><input type='radio' name='subcategory' id='subcategory1' value='1'>미세례</label><label for='subcategory2' class='input_tag2'><input type='radio' name='subcategory' id='subcategory2' value='2'>유아세례</label><label for='subcategory3' class='input_tag2'><input type='radio' name='subcategory' id='subcategory3' value='3'>미가입식</label><label for='subcategory4' class='input_tag2'><input type='radio' name='subcategory' id='subcategory4' value='4'>병역</label><label for='subcategory5' class='input_tag2'><input type='radio' name='subcategory' id='subcategory5' value='5'>해외</label><label for='subcategory6' class='input_tag2'><input type='radio' name='subcategory' id='subcategory6' value='6'>지방</label><label for='subcategory7' class='input_tag2'><input type='radio' name='subcategory' id='subcategory7' value='7'>교우</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-						} else if(subcategoryValue>=10&&subcategoryValue<31) {
-							$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr2'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory10' class='input_tag2'><input type='radio' name='subcategory' id='subcategory10' value='10'>2023년</label><label for='subcategory11' class='input_tag2'><input type='radio' name='subcategory' id='subcategory11' value='11'>2024년</label><label for='subcategory12' class='input_tag2'><input type='radio' name='subcategory' id='subcategory12' value='12'>2025년</label><label for='subcategory13' class='input_tag2'><input type='radio' name='subcategory' id='subcategory13' value='13'>2026년</label><label for='subcategory14' class='input_tag2'><input type='radio' name='subcategory' id='subcategory14' value='14'>2027년</label><label for='subcategory15' class='input_tag2'><input type='radio' name='subcategory' id='subcategory15' value='15'>2028년</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-						} else if(subcategoryValue>=31) {
-							$('#table_box tr:eq(2)').before("<tr class='tr_class' id='insert_tr3'><td  class='input_td' colspan='2' style='padding-left:90px;'><label for='subcategory31' class='input_tag2'><input type='radio' name='subcategory' id='subcategory31' value='31'>유아유치부</label><label for='subcategory32' class='input_tag2'><input type='radio' name='subcategory' id='subcategory32' value='32'>어린이부</label><label for='subcategory33' class='input_tag2'><input type='radio' name='subcategory' id='subcategory33' value='33'>청소년부</label><button class='reset-btn' onclick=\"resetSpecificRadio('subcategory', event)\">미선택</button></td></tr>");
-						}
-						$('input[name="subcategory"][value="' + subcategoryValue + '"]').prop('checked', true);
-						var age_categoryValue = cc[4];
-						$('input[name="age_category"][value="' + age_categoryValue + '"]').prop('checked', true);
-						var service_categoryValue = cc[5];
-						$('input[name="service_category"][value="' + service_categoryValue + '"]').prop('checked', true);
-						var register_date = cc[6].replace(/-/g, '');
-						$("#register_date").val(register_date);
-						var visit_date = cc[7].replace(/-/g, '');
-						$("#visit_date").val(visit_date);
-						$("#memo").val(cc[8]);
-						if(cc[9]==1) $('#no_use').prop('checked', true);
-						//console.log(data);
-				}
-			})
-		}
-	});
-
-	$(".member-name").on('contextmenu', function(e) {
-		if(mode==1) {
-			e.preventDefault(); // 기본 컨텍스트 메뉴 방지 (선택사항)
-			var $element = $(this);
-			var textValue = $element.text();
-			var memberNo = $element.data('id');
-			thisSelectedMemberNo=memberNo;
-			var memberPlace = $element.data('place');
-			var cc=memberPlace.split('_');
-			memberPlace=cc[1];
-			console.log("memberPlace",memberPlace);
-			var sunday = this_sunday;
-			if(memberPlace>=1) {
-				$("#hidden-place-box").css("display", "block");
-				var x = e.pageX - 100;
-				var y = e.pageY - 150;
-				$('input[name="place"][value="' + memberPlace + '"]').prop('checked', true);
-				if(x < 0) x = 0;
-				if(y < 0) y = 0;
-				if(x + 200 > $("#container").width()) x = $("#container").width() - 200;
-				if(y + 240 > $("#container").height()) y = $("#container").height() - 240;
-				y = y + $("#container").scrollTop();
-				$("#hidden-place-box").css({"top": y + "px", "left": x + "px"});
-			}
-		}
-	});
-}
-
-$('input[name="place"]').change(function() {
-	if (this.checked) {
-		var selectedPlace=$(this).val();
-		var sunday = this_sunday;
-		console.log('thisSelectedMemberNo:', thisSelectedMemberNo);
-		console.log('selectedPlace:', selectedPlace);
-		$.ajax({
-			url:"member-place-ok.php",
-			type: "POST",   
-			data: { memberNo:thisSelectedMemberNo, sunday:sunday, place:selectedPlace },
-			dataType:'json',
-			success:function(data){
-				var cc=data.split('@@@');
-				var placeText="place_"+selectedPlace;
-				console.log("placeText",placeText);
-				if(cc[0]>1) {
-					$('div[data-id="'+thisSelectedMemberNo+'"]').removeClass().addClass("member-name bg_color_gray");
-					$('div[data-id="'+thisSelectedMemberNo+'"]').data('place', placeText);
-				} else {
-					$('div[data-id="'+thisSelectedMemberNo+'"]').removeClass().addClass("member-name bg_color_black");
-					$('div[data-id="'+thisSelectedMemberNo+'"]').data('place', placeText);
-				}
-				$("#main_num").text(cc[1]);
-				$("#sub_num").text(cc[2]);
-				$("#visit_num").text(cc[3]);
-				$("#unknown_num").text(cc[4]);
-				$("#total_num").text(cc[5]);
-				$("#kinder_num").text(cc[6]);
-				$("#child_num").text(cc[7]);
-				$("#young_num").text(cc[8]);
-				$("#school_total_num").text(cc[9]);
-
-				$("#teacher_num").text(cc[10]);
-				$("#parent_num").text(cc[11]);
-				$("#program_num").text(cc[12]);
-				$("#service_num").text(cc[13]);
-				$("#etc_num").text(cc[14]);
-				$("#extra_total_num").text(cc[15]);
-				$("#all_total_num").text(cc[16]);
-
-				$("#extra_main_num").text("("+cc[17]+")");
-				$("#extra_sub_num").text("("+cc[18]+")");
-				$("#extra_visit_num").text("("+cc[19]+")");
-				$("#extra_sum_num").text("("+cc[20]+")");
-				
-				$('input[name="place"]').prop('checked', false);
-				$("#hidden-place-box").css("display", "none");
-			}
-		})
-	}
-});
-
-$("#member_ok_button").click(function(){
-	var no=$("#member_no").val();
-	if(!$("#member_name").val()) alert("이름을 입력해 주십시요.");
-	else if(!$('input[name="category"]:checked').val()) alert("구분을 선택해 주십시요.");
-	var name=$("#member_name").val();
-	var category = $('input[name="category"]:checked').val();
-	var subcategory = $('input[name="subcategory"]:checked').val();
-	var age_category = $('input[name="age_category"]:checked').val();
-	var service_category = $('input[name="service_category"]:checked').val();
-	var register_date=$("#register_date").val();
-	var visit_date=$("#visit_date").val();
-	var memo=$("#memo").val();
-	memo = memo.replace(/['"]/g, '');
-	var no_use = $('#no_use').is(':checked') ? 1 : 0;
-	//console.log(no);
-	$.ajax({
-		url:"member-ok.php",
-		type: "POST",   
-		data: { no:no, name:name, category:category, subcategory:subcategory, age_category:age_category, service_category:service_category, register_date:register_date, visit_date:visit_date, memo:memo, no_use:no_use },
-		dataType:'json',
-		success:function(data){
-			var cc=data.split('@@@');
-			if(cc[0]==0) {
-				alert("동일한 이름이 있습니다. '비노출 교인'에 명단에 동일한 이름이 있을 수도 있습니다. 이름 뒤에 B, C순으로 알파벳을 붙여 구분해 주세요.")
-			} else {
-				$("#member_form")[0].reset();
-				$("#member_no").val("");
-				$('#insert_tr1').remove();
-				$('#insert_tr2').remove();
-				$('#insert_tr3').remove();
-				$('#visit_date').val('');
-				$("#input_box").css("display", "none");
-				if(visit_date==this_sunday.replace(/-/g, '')) {
-					var thisUnknownNum=Number($("#unknown_num").text());
-					console.log("thisUnknownNum", thisUnknownNum);
-					thisUnknownNum--;
-					$("#unknown_num").text(thisUnknownNum);
-				}
-				if(cc[1]) {
-					$('#container').prepend('<div class="member-name bg_color_new" data-class="member-name bg_color_new" data-id="'+cc[0]+'" style="height:'+memberBoxHeight+'px;">'+cc[1]+'</div>');
-					memberNameSet();
-				}
-				if(view_select==8&&no_use==0) $('[data-id="'+no+'"]').remove();
-				if(no_use==1)  $('[data-id="'+no+'"]').remove();
-			}
-		}
-	})
-});
-
-$("#service_category_add_button").click(function(){
-	var addItem=$("#service_category_add").val();
-	$.ajax({
-		url:"member-service-add-ok.php",
-		type: "POST",   
-		data: { addItem:addItem },
-		dataType:'json',
-		success:function(data){
-			if(data==0) {
-				alert("동일한 항목이 있습니다.")
-			} else {
-				$('#service_list').append("<label for='service_category"+data+"' class='input_tag2'><input type='radio' name='service_category' class='service_category' id='service_category"+data+"' value='"+data+"'>"+addItem+"</label>");
-				$("#service_category_add").val("");
-			}
-		}
-	})
-});
-
-$("#add-icon").click(function(){
-	if(mode==2) {
-		$("#input_box").css("display", "block");
-		$("#member_form")[0].reset();
-		$("#member_no").val("");
-		$('#insert_tr1').remove();
-		$('#insert_tr2').remove();
-		$('#insert_tr3').remove();
-		$('#visit_date').val('');
-	}
-});
-
-function getRotatedCoordinates(x, y, rotation) {
-    var centerX = $(window).width() / 2;
-    var centerY = $(window).height() / 2;
-    if (rotation === 180) {
-        // 180도 회전: 중심점 기준으로 대칭 이동
-        var newX = centerX + (centerX - x);
-        var newY = centerY + (centerY - y);
-        return { x: newX, y: newY };
+    var radios = document.querySelectorAll('input[type="radio"][name="' + groupName + '"]');
+    for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = false;
     }
-    return { x: x, y: y };
+    if (groupName === "category") {
+        removeInsertRows();
+        document.getElementById("visit_date").value = "";
+    }
 }
 
-function getFloatRowCount() {
-	var $container = $('#container');
-	var $items = $container.find('div').filter(':visible');
-	if ($items.length === 0) return 0;
-	if ($container.width() === 0) {
-		console.log('컨테이너가 아직 렌더링되지 않았습니다');
-		return 0;
-	}
-	try {
-		var positions = [];
-		$items.each(function() {
-			var pos = $(this).position();
-			positions.push(Math.round(pos.top * 10) / 10); // 소수점 1자리
-		});
-		// jQuery 방식으로 중복 제거
-		var uniquePositions = [];
-		$.each(positions, function(i, pos) {
-			if ($.inArray(pos, uniquePositions) === -1) {
-			uniquePositions.push(pos);
-			}
-		});
-		return uniquePositions.length;
-	} catch (error) {
-		console.error('줄 수 계산 중 오류:', error);
-		return 0;
-	}
-}
-
-function getLastSundayYmd() {
-    var today = new Date();
-    var dayOfWeek = today.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
-    
-    // 오늘이 일요일이면 0일, 아니면 해당 요일 숫자만큼 빼기
-    var daysToSubtract = dayOfWeek === 0 ? 0 : dayOfWeek;
-    
-    var lastSunday = new Date(today);
-    lastSunday.setDate(today.getDate() - daysToSubtract);
-    
-    // YYYY-MM-DD 형식으로 변환
-    var year = lastSunday.getFullYear();
-    var month = String(lastSunday.getMonth() + 1).padStart(2, '0');
-    var day = String(lastSunday.getDate()).padStart(2, '0');
-    
-    return year + month + day;
-}
-
-function boxHeightSet() {
-    var $container = $('#container');
-    var $items = $container.find('div');
-    var containerWidth = $container.width();
-    var itemWidth = $items.first().outerWidth(true);
-    var itemsPerRow = Math.floor(containerWidth / itemWidth);
-	var totalRows = Math.ceil(total_box_num/25);
-    const $lastDiv = $('#container div:nth-last-child(2)');
-    const position = $lastDiv.position();
-	const boxHeight = $lastDiv.outerHeight();
-	const allBboxesHeight = position + boxHeight;
-	const containerHeight = $('#container').height();
-	var newBoxHeight = containerHeight / totalRows;
-	if(newBoxHeight>80) newBoxHeight=80;
-	memberBoxHeight=newBoxHeight;
-	$(".member-name").css("height", newBoxHeight);
-	$(".cate").css("height", newBoxHeight);
-}
-
-$(document).ready(function() {
-    var isShiftPressed = false;
-    
-    // Shift 키를 눌렀을 때
-    $(document).keydown(function(e) {
-        if (e.shiftKey && !isShiftPressed) {
-            isShiftPressed = true;
-            if(mode==1) modeSet(2);
-			else if(mode==2) modeSet(1);
-        }
+function addServiceCategory() {
+    var txt = document.getElementById("service_category_add").value.trim();
+    if (!txt) {
+        alert("추가할 소속명을 입력해주세요.");
+        return;
+    }
+    var newNo = String(Date.now());
+    var sList = document.getElementById("service_list");
+    var lbl = document.createElement("label");
+    lbl.className = "input_tag2";
+    lbl.innerHTML = '<input type="radio" name="service_category" id="service_category' + newNo + '" value="' + newNo + '" checked> ' + txt;
+    sList.appendChild(lbl);
+    document.getElementById("service_category_add").value = "";
+    $.ajax({
+        type: "POST",
+        url: "member-service-add-ok.php",
+        data: { title: txt },
+        dataType: "json"
     });
-    
-    // Shift 키를 뗐을 때
-    $(document).keyup(function(e) {
-        if (e.key === 'Shift') {
-            isShiftPressed = false;
-            if(mode==1) modeSet(2);
-			else if(mode==2) modeSet(1);
+    alert("'" + txt + "' 소속 항목이 추가되었습니다.");
+}
+
+function saveMember() {
+    var name = document.getElementById("member_name").value.trim();
+    if (!name) {
+        alert("이름을 입력해 주십시요.");
+        return;
+    }
+    var catRadio = document.querySelector('input[name="category"]:checked');
+    if (!catRadio) {
+        alert("구분을 선택해 주십시요.");
+        return;
+    }
+
+    var memberNo = document.getElementById("member_no").value;
+    var catVal = catRadio.value;
+    var subRadio = document.querySelector('input[name="subcategory"]:checked');
+    var subVal = subRadio ? subRadio.value : "0";
+    var ageRadio = document.querySelector('input[name="age_category"]:checked');
+    var ageVal = ageRadio ? ageRadio.value : "0";
+    var srvRadio = document.querySelector('input[name="service_category"]:checked');
+    var srvVal = srvRadio ? srvRadio.value : "0";
+    var regDate = document.getElementById("register_date").value.trim();
+    var visDate = document.getElementById("visit_date").value.trim();
+    var memo = document.getElementById("memo").value.trim();
+    var noUse = document.getElementById("no_use").checked ? 1 : 0;
+
+    var cateBadge = "정";
+    var cateColor = "darkred";
+    if (catVal === "2") { cateBadge = "준"; cateColor = "darkgreen"; }
+    else if (catVal === "3") { cateBadge = "방"; cateColor = "darkgray"; }
+    else if (catVal === "4") { cateBadge = "교"; cateColor = "darkgreen"; }
+
+    if (!memberNo) {
+        // 신규 교인 등록
+        var newNo = String(Date.now());
+        var newMember = {
+            no: newNo,
+            name: name,
+            category: catVal,
+            subcategory: subVal,
+            age_category: ageVal,
+            service_category: srvVal,
+            register_date: regDate,
+            visit_date: visDate,
+            memo: memo,
+            no_use: noUse,
+            cate: cateBadge,
+            color: cateColor
+        };
+        memberDetailsMap[newNo] = newMember;
+        allMembers.unshift(newMember);
+
+        // 타일 컨테이너 최상단에 추가
+        var tileCont = document.getElementById("tiles-container");
+        var newTile = document.createElement("div");
+        newTile.className = "member-name bg_color_new";
+        newTile.setAttribute("data-id", newNo);
+        newTile.style.height = memberBoxHeight + "px";
+        newTile.innerHTML = '<span class="last-name">' + name.substring(0, 1) + '</span>' + name.substring(1);
+        newTile.onclick = function() { handleMemberTileClick(this); };
+        tileCont.prepend(newTile);
+
+        var formData = $("#member_form").serialize();
+        $.ajax({
+            type: "POST",
+            url: "member-ok.php",
+            data: formData,
+            dataType: "json"
+        });
+        alert("교인 '" + name + "' 님이 새로 등록되었습니다.");
+    } else {
+        // 기존 교인 수정
+        var mObj = memberDetailsMap[memberNo] || {};
+        mObj.name = name;
+        mObj.category = catVal;
+        mObj.subcategory = subVal;
+        mObj.age_category = ageVal;
+        mObj.service_category = srvVal;
+        mObj.register_date = regDate;
+        mObj.visit_date = visDate;
+        mObj.memo = memo;
+        mObj.no_use = noUse;
+        mObj.cate = cateBadge;
+        mObj.color = cateColor;
+        memberDetailsMap[memberNo] = mObj;
+
+        for (var i = 0; i < allMembers.length; i++) {
+            if (String(allMembers[i].no) === String(memberNo)) {
+                allMembers[i].name = name;
+                allMembers[i].cate = cateBadge;
+                allMembers[i].color = cateColor;
+                allMembers[i].no_use = noUse;
+                break;
+            }
         }
-    });
-});
 
-/*
-if(window.opener) {
-	var memberService = window.opener.memberService;
-	if(memberService!=1) window.location.href = '/';
-}
-if (!window.opener || window.opener.closed) {
-        window.location.href = '/';
-}
-*/
+        // 타일 DOM 갱신
+        var targetTile = document.querySelector('.member-name[data-id="' + memberNo + '"]');
+        if (targetTile) {
+            if (noUse === 1 && document.getElementById("view_select").value !== "8") {
+                targetTile.remove();
+            } else {
+                targetTile.innerHTML = '<span class="last-name">' + name.substring(0, 1) + '</span>' + name.substring(1);
+            }
+        }
 
-function isInFullscreen() {
+        var formData = $("#member_form").serialize();
+        $.ajax({
+            type: "POST",
+            url: "member-ok.php",
+            data: formData,
+            dataType: "json"
+        });
+        alert("'" + name + "' 교인 정보가 수정되었습니다.");
+    }
+
+    closeMemberModal();
+}
+
+function deleteMember() {
+    var memberNo = document.getElementById("member_no").value;
+    var name = document.getElementById("member_name").value;
+    if (!memberNo) return;
+
+    if (confirm(name + " 님을 삭제하시겠습니까?")) {
+        delete memberDetailsMap[memberNo];
+        for (var i = 0; i < allMembers.length; i++) {
+            if (String(allMembers[i].no) === String(memberNo)) {
+                allMembers.splice(i, 1);
+                break;
+            }
+        }
+        var targetTile = document.querySelector('.member-name[data-id="' + memberNo + '"]');
+        if (targetTile) targetTile.remove();
+
+        $.ajax({
+            type: "POST",
+            url: "member-delete.php",
+            data: { no: memberNo },
+            dataType: "json"
+        });
+        closeMemberModal();
+        alert("삭제되었습니다.");
+    }
+}
+
+// ── 타일 클릭 핸들러 (모드별 분기) ──
+function handleMemberTileClick(el) {
+    var memberNo = el.getAttribute("data-id");
+    if (!memberNo) return;
+
+    if (mode === 1) {
+        // 터치스크린 모드: 출석 토글
+        var key = memberNo + "-" + curSunday;
+        var curVal = attMap[key];
+        var mainEl = document.getElementById("main_num");
+        var curMain = parseInt(mainEl.innerText) || 0;
+        var isChecked = false;
+
+        if (curVal === 1) {
+            delete attMap[key];
+            el.classList.remove("bg_color_black");
+            el.classList.add("bg_color_category_1");
+            if (curMain > 0) curMain--;
+            isChecked = false;
+        } else {
+            attMap[key] = 1;
+            el.classList.add("bg_color_black");
+            el.classList.remove("bg_color_category_1");
+            curMain++;
+            isChecked = true;
+        }
+        mainEl.innerText = curMain;
+        changeUnknown(0); // 합계 재계산
+
+        // 원본 기능: 전체화면에 이름이 크게 표시되었다가 서서히 사라짐
+        var member = memberDetailsMap[memberNo];
+        var memberName = (member && member.name) ? member.name : el.textContent.replace(/\s+/g, "");
+        showBigNameOverlay(memberName, isChecked);
+
+        // 실시간 서버 DB 반영 AJAX
+        $.ajax({
+            type: "POST",
+            url: "member-attendance-ok.php",
+            data: { memberNo: memberNo, sunday: curSunday },
+            dataType: "json",
+            success: function(res) {
+                if (res && res.main_num !== undefined) {
+                    if (!weeklyStatsMap[curSunday]) weeklyStatsMap[curSunday] = {};
+                    weeklyStatsMap[curSunday].reg = res.main_num;
+                    weeklyStatsMap[curSunday].sub = res.sub_num;
+                    weeklyStatsMap[curSunday].visit = res.visit_num;
+                    updateSundayStats();
+                }
+            }
+        });
+    } else if (mode === 2) {
+        // 편집 모드: 교인 정보 수정 모달 열림!
+        openMemberEditModal(memberNo);
+    }
+}
+
+// ── 출석 토글시 전체화면 대형 이름 오버레이 (원본 hidden-box 완벽 재현) ──
+function showBigNameOverlay(name, isChecked) {
+    var hiddenBox = document.getElementById("hidden-box");
+    var wrapper = document.getElementById("table-wrapper");
+    if (!hiddenBox || !wrapper) return;
+
+    name = (name || "").replace(/\s+/g, "");
+    hiddenBox.innerText = name;
+    hiddenBox.style.display = "flex";
+    hiddenBox.style.opacity = "1";
+    hiddenBox.style.transition = "";
+
+    var scrollTop = wrapper.scrollTop || 0;
+    hiddenBox.style.top = scrollTop + "px";
+    hiddenBox.style.left = "0px";
+    hiddenBox.style.width = wrapper.clientWidth + "px";
+    hiddenBox.style.height = wrapper.clientHeight + "px";
+
+    var isRot = wrapper.classList.contains("rotated");
+    var baseMaxRem = isRot ? 14 : (isFullScreen() ? 14 : 11);
+    var nameLen = Math.max(name.length, 2);
+    // 한 줄에 여유 있게 완전히 들어가도록 글자수와 컨테이너 너비에 맞게 계산
+    var maxRemByWidth = (wrapper.clientWidth * 0.72) / (nameLen * 18);
+    var finalRem = Math.min(baseMaxRem, Math.max(4.5, maxRemByWidth));
+    hiddenBox.style.fontSize = finalRem.toFixed(1) + "rem";
+
+    var duration = isChecked ? 1000 : 300;
+    if (hiddenBox._fadeTimer) clearTimeout(hiddenBox._fadeTimer);
+    if (hiddenBox._hideTimer) clearTimeout(hiddenBox._hideTimer);
+
+    hiddenBox._fadeTimer = setTimeout(function() {
+        hiddenBox.style.transition = "opacity " + (duration / 1000) + "s ease-out";
+        hiddenBox.style.opacity = "0";
+        hiddenBox._hideTimer = setTimeout(function() {
+            hiddenBox.style.display = "none";
+            hiddenBox.style.transition = "";
+        }, duration);
+    }, 150);
+}
+
+// ── 전체화면 및 리사이징 로직 ──
+function isFullScreen() {
     return !!(
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
-        document.msFullscreenElement ||
-        // 브라우저 전체화면도 감지
-        (window.outerHeight === screen.height && window.outerWidth === screen.width)
+        document.msFullscreenElement
     );
 }
 
-window.addEventListener('resize', function(e) {
-    if (!isInFullscreen()) {
-        window.resizeTo(1500, 992);
-		boxHeightSet();
+var total_box_num = 633;
+var memberBoxHeight = 40;
+
+function fullScreenBoxHeightSet() {
+    var currentView = document.getElementById("view_select").value;
+    var container = document.getElementById("table-wrapper");
+    if (!container) return;
+
+    var screenHeight = window.innerHeight;
+    var screenWidth = window.innerWidth;
+    var isRot = container.classList.contains("rotated");
+
+    if (currentView === "7") {
+        var rows = document.querySelectorAll("#table-body .table-row");
+        if (rows.length > 0) {
+            var topOffset = container.offsetTop || 75;
+            var availHeight = screenHeight - topOffset - 55;
+            var rowH = Math.floor(availHeight / rows.length);
+            if (rowH > 40) {
+                for (var r = 0; r < rows.length; r++) {
+                    rows[r].style.height = rowH + "px";
+                    var cols = rows[r].children;
+                    for (var c = 0; c < cols.length; c++) {
+                        cols[c].style.height = rowH + "px";
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    if (currentView !== "1" && currentView !== "2" && currentView !== "3" && currentView !== "4" && currentView !== "8") {
+        return;
+    }
+
+    var memberElements = document.querySelectorAll("#tiles-container .member-name, #tiles-container .cate");
+    var totalBoxes = total_box_num || memberElements.length || 633;
+
+    if (!isRot) {
+        var totalRows = Math.ceil(totalBoxes / 25);
+        var containerHeight = screenHeight - (container.offsetTop || 80);
+        var newBoxHeight = containerHeight / totalRows;
+        memberBoxHeight = newBoxHeight;
+        if (newBoxHeight > 80) newBoxHeight = 80;
+
+        for (var i = 0; i < memberElements.length; i++) {
+            memberElements[i].style.height = newBoxHeight + "px";
+            memberElements[i].style.width = "4%";
+        }
+    } else {
+        var totalRows = Math.ceil(totalBoxes / 14);
+        var containerHeight = screenWidth;
+        var newBoxHeight = containerHeight / totalRows;
+        memberBoxHeight = newBoxHeight;
+        if (newBoxHeight > 80) newBoxHeight = 80;
+
+        for (var i = 0; i < memberElements.length; i++) {
+            memberElements[i].style.height = newBoxHeight + "px";
+            memberElements[i].style.width = "7.1428%";
+        }
+    }
+}
+
+function enterFullscreen() {
+    if (isFullScreen()) {
+        var container = document.getElementById("table-wrapper");
+        if (container && container.classList.contains("rotated")) {
+            rotateContainer();
+        }
+        exitFullscreen();
+    } else {
+        var elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        }
+    }
+}
+
+function exitFullscreen() {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    }
+}
+
+function resetFullscreenState() {
+    var container = document.getElementById("table-wrapper");
+    if (!container) return;
+
+    container.style.transform = "none";
+    container.style.width = "100%";
+    container.style.height = "auto";
+    container.style.overflowY = "scroll";
+    container.style.overflowX = "hidden";
+    container.classList.remove("rotated");
+
+    var currentView = document.getElementById("view_select").value;
+    if (currentView === "1" || currentView === "2" || currentView === "3" || currentView === "4") {
+        container.style.top = "80px";
+    } else {
+        container.style.top = "75px";
+    }
+
+    if (currentView === "7") {
+        var rows = document.querySelectorAll("#table-body .table-row");
+        for (var r = 0; r < rows.length; r++) {
+            rows[r].style.height = "40px";
+            var cols = rows[r].children;
+            for (var c = 0; c < cols.length; c++) {
+                cols[c].style.height = "40px";
+            }
+        }
+        return;
+    }
+
+    var memberElements = document.querySelectorAll("#tiles-container .member-name, #tiles-container .cate");
+    for (var i = 0; i < memberElements.length; i++) {
+        memberElements[i].style.height = "40px";
+        memberElements[i].style.width = "4%";
+    }
+}
+
+function rotateContainer() {
+    if (isFullScreen()) {
+        var container = document.getElementById("table-wrapper");
+        if (!container) return;
+        var screenWidth = window.innerWidth;
+        var topOffset = container.offsetTop || 75;
+        var screenHeight = window.innerHeight - topOffset;
+
+        if (!container.classList.contains("rotated")) {
+            var translateX = (screenWidth - screenHeight) / 2;
+            var translateY = (screenHeight - screenWidth) / 2;
+
+            container.style.transformOrigin = "50% 50%";
+            container.style.transform = "translate(" + translateX + "px, " + translateY + "px) rotate(-90deg)";
+            container.style.width = screenHeight + "px";
+            container.style.height = screenWidth + "px";
+            container.style.overflow = "hidden";
+            container.classList.add("rotated");
+        } else {
+            container.style.transform = "none";
+            container.style.width = "100%";
+            container.style.height = (window.innerHeight - topOffset) + "px";
+            container.style.overflow = "hidden";
+            container.classList.remove("rotated");
+        }
+        fullScreenBoxHeightSet();
+    } else {
+        alert("전체 화면에서 회전할 수 있습니다.");
+    }
+}
+
+function onFullscreenChange() {
+    var container = document.getElementById("table-wrapper");
+    if (!container) return;
+
+    if (isFullScreen()) {
+        container.style.overflow = "hidden";
+        fullScreenBoxHeightSet();
+    } else {
+        container.style.overflow = "scroll";
+        resetFullscreenState();
+    }
+}
+
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+document.addEventListener("mozfullscreenchange", onFullscreenChange);
+document.addEventListener("MSFullscreenChange", onFullscreenChange);
+
+window.addEventListener("resize", function() {
+    if (isFullScreen()) {
+        fullScreenBoxHeightSet();
     }
 });
 
+// ── 메인 테이블 / 타일 렌더러 ──
+function renderTable() {
+    var currentView = document.getElementById("view_select").value;
+    var btnPrev = document.getElementById("btn-prev");
+    var btnNext = document.getElementById("btn-next");
+
+    if (currentView === "1" || currentView === "2" || currentView === "3" || currentView === "4" || currentView === "8") {
+        document.getElementById("grid-view-container").style.display = "none";
+        document.getElementById("tiles-container").style.display = "block";
+        btnPrev.classList.add("hidden");
+        btnNext.classList.add("hidden");
+        
+        var resp = viewResponses[currentView];
+        if (resp) {
+            var parts = resp.split("@@@");
+            document.getElementById("tiles-container").innerHTML = parts[0];
+            total_box_num = parseInt(parts[1]) || 0;
+            if (!total_box_num) {
+                total_box_num = document.querySelectorAll("#tiles-container .member-name, #tiles-container .cate").length;
+            }
+            
+            var tileElems = document.querySelectorAll("#tiles-container .member-name");
+            for (var t = 0; t < tileElems.length; t++) {
+                tileElems[t].onclick = function() { handleMemberTileClick(this); };
+            }
+            updateTileAttendanceForCurrentSunday();
+            if (isFullScreen()) {
+                fullScreenBoxHeightSet();
+            }
+        } else {
+            document.getElementById("tiles-container").innerHTML = '<div style="padding:40px; text-align:center; font-size:1.2rem; color:#666;">불러오는 중...</div>';
+            $.ajax({
+                url: "member-list-get-ajax.php",
+                data: { view_type: currentView, sunday: curSunday },
+                dataType: "json",
+                success: function(htmlRes) {
+                    viewResponses[currentView] = htmlRes;
+                    var parts = htmlRes.split("@@@");
+                    document.getElementById("tiles-container").innerHTML = parts[0];
+                    total_box_num = parseInt(parts[1]) || 0;
+                    if (!total_box_num) {
+                        total_box_num = document.querySelectorAll("#tiles-container .member-name, #tiles-container .cate").length;
+                    }
+                    var tileElems = document.querySelectorAll("#tiles-container .member-name");
+                    for (var t = 0; t < tileElems.length; t++) {
+                        tileElems[t].onclick = function() { handleMemberTileClick(this); };
+                    }
+                    updateTileAttendanceForCurrentSunday();
+                    if (isFullScreen()) {
+                        fullScreenBoxHeightSet();
+                    }
+                }
+            });
+        }
+        return;
+    } else {
+        document.getElementById("grid-view-container").style.display = "block";
+        document.getElementById("tiles-container").style.display = "none";
+    }
+
+    // ── [1. 주일별 출석 현황] ──
+    if (currentView === "7") {
+        btnPrev.classList.add("hidden");
+        btnNext.classList.add("hidden");
+
+        var headHtml = '<div class="col col-head col-week-date">날짜</div>' +
+                       '<div class="col col-head col-week-title-title">총계</div>' +
+                       '<div class="col col-head col-week-title-title">예배실</div>' +
+                       '<div class="col col-head col-week-title">정회원</div>' +
+                       '<div class="col col-head col-week-title">준회원</div>' +
+                       '<div class="col col-head col-week-title">방문출석</div>' +
+                       '<div class="col col-head col-week-title-short">미확인</div>' +
+                       '<div class="col col-head col-week-title-short">예배실外</div>' +
+                       '<div class="col col-head col-week-title-short">교사</div>' +
+                       '<div class="col col-head col-week-title-short">학부모</div>' +
+                       '<div class="col col-head col-week-title-short">프로그램</div>' +
+                       '<div class="col col-head col-week-title-short">업무</div>' +
+                       '<div class="col-head col-week-title-short col">기타</div>' +
+                       '<div class="col col-head col-week-title-short">교회학교</div>' +
+                       '<div class="col col-head col-week-title-short">유아유치</div>' +
+                       '<div class="col col-head col-week-title-short">어린이부</div>' +
+                       '<div class="col col-head col-week-title-short">청소년부</div>' +
+                       '<div class="col col-head col-week-title-short">온라인</div>';
+        document.getElementById("table-header").innerHTML = headHtml;
+
+        var weeklyDetailed = weeklyStatsList;
+        var bodyHtml = "";
+        for (var i = 0; i < weeklyDetailed.length; i++) {
+            var ws = weeklyDetailed[i];
+            var allTotal = parseInt(ws.total) + parseInt(ws.unknown);
+            var totalNum = parseInt(ws.total) + parseInt(ws.unknown);
+            var extraTotal = parseInt(ws.outside);
+
+            var row = '<div class="table-row" style="height:40px;">';
+            row += '<div class="col col-week-date">' + ws.date + '</div>';
+            row += '<div class="col col-week-title-long col-all">' + allTotal + '<br><div class="graph" style="width:' + allTotal + 'px;"></div></div>';
+            row += '<div class="col col-week-title-long col-sub">' + totalNum + '<br><div class="graph" style="width:' + totalNum + 'px;"></div></div>';
+            row += '<div class="col col-week-title">' + ws.reg + '</div>';
+            row += '<div class="col col-week-title">' + ws.sub + '</div>';
+            row += '<div class="col col-week-title">' + ws.visit + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.unknown + '</div>';
+            row += '<div class="col col-week-title-short col-sub">' + extraTotal + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.teacher + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.parent + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.prog + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.serv + '</div>';
+            row += '<div class="col col-week-title-short">' + ws.etc + '</div>';
+            var schoolTotal = parseInt(ws.kinder) + parseInt(ws.child) + parseInt(ws.young);
+            row += '<div class="col col-week-title-short col-online">' + schoolTotal + '</div>';
+            row += '<div class="col col-week-title-short col-school">' + ws.kinder + '</div>';
+            row += '<div class="col col-week-title-short col-school">' + ws.child + '</div>';
+            row += '<div class="col col-week-title-short col-school">' + ws.young + '</div>';
+            row += '<div class="col col-week-title-short col-online">' + ws.online + '</div>';
+            row += '</div>';
+            bodyHtml += row;
+        }
+        document.getElementById("table-body").innerHTML = bodyHtml;
+        return;
+    }
+
+    // ── [2. 교인별 출석 (5, 6, 9)] ──
+    var startIdx = pageIndex * PAGE_SIZE;
+    var endIdx = Math.min(startIdx + PAGE_SIZE, allDates.length);
+    var pageDates = allDates.slice(startIdx, endIdx);
+
+    var rateTitle = "출석률";
+    var rateTooltip = "클릭하여 출석률순/가나다순 전환";
+    var rateClick = 'onclick="toggleSortMode()"';
+    if (currentView === "6") {
+        rateTitle = "출석률 ▼";
+    } else if (currentView === "9") {
+        rateTitle = "감소폭";
+        rateTooltip = "출석률 감소폭";
+        rateClick = "";
+    }
+
+    var headerHtml = '<div class="col-head-name">교인명</div>' +
+                     '<div class="col-head-rate" title="' + rateTooltip + '" ' + rateClick + '>' + rateTitle + '</div>';
+    
+    for (var i = 0; i < pageDates.length; i++) {
+        var d = pageDates[i];
+        var cls = "col-head-date";
+        var extraAttr = "";
+        if (pageIndex === 0 && i === 0) {
+            cls += " latest-first";
+            extraAttr = ' title="최신 주일 (가장 최근)"';
+        } else if (d.is_xmas) {
+            cls += " xmas";
+            extraAttr = ' title="성탄절 예배"';
+        } else if (d.full === originDate) {
+            cls += " origin";
+            extraAttr = ' title="출석 기록 시작일 (2025.08.10)"';
+        }
+        headerHtml += '<div class="' + cls + '"' + extraAttr + '>' + d.short + '</div>';
+    }
+    document.getElementById("table-header").innerHTML = headerHtml;
+
+    // 멤버 데이터 가공
+    var displayMembers = [];
+    var recent25 = allDates.slice(0, 25);
+    var prior25 = allDates.slice(25, 50);
+
+    for (var i = 0; i < allMembers.length; i++) {
+        var m = allMembers[i];
+        if (m.no_use === 1) continue; // 비노출 교인 제외
+
+        var attCount = 0;
+        for (var j = 0; j < pageDates.length; j++) {
+            var d = pageDates[j].full;
+            var key = m.no + "-" + d;
+            var val = attMap[key];
+            if (val && (val >= 1 && val <= 6)) {
+                attCount++;
+            }
+        }
+        var rate = Math.round((attCount / pageDates.length) * 100);
+
+        var pRecent = 0;
+        for (var j = 0; j < recent25.length; j++) {
+            var key = m.no + "-" + recent25[j].full;
+            var val = attMap[key];
+            if (val && (val >= 1 && val <= 6)) pRecent++;
+        }
+        var rateRecent = (pRecent / 25.0) * 100.0;
+
+        var pPrior = 0;
+        for (var j = 0; j < prior25.length; j++) {
+            var key = m.no + "-" + prior25[j].full;
+            var val = attMap[key];
+            if (val && (val >= 1 && val <= 6)) pPrior++;
+        }
+        var ratePrior = (pPrior / 25.0) * 100.0;
+        var diff = ratePrior - rateRecent;
+
+        displayMembers.push({
+            no: m.no,
+            name: m.name,
+            cate: m.cate,
+            color: m.color,
+            attCount: attCount,
+            rate: rate,
+            rateRecent: rateRecent,
+            ratePrior: ratePrior,
+            diff: diff
+        });
+    }
+
+    // 정렬
+    if (currentView === "6") {
+        displayMembers.sort(function(a, b) {
+            if (b.rate !== a.rate) return b.rate - a.rate;
+            return a.name.localeCompare(b.name, "ko");
+        });
+    } else if (currentView === "9") {
+        var filtered = displayMembers.filter(function(m) {
+            return m.rateRecent < 30.0;
+        });
+        filtered.sort(function(a, b) {
+            if (b.diff !== a.diff) return b.diff - a.diff;
+            return a.name.localeCompare(b.name, "ko");
+        });
+        displayMembers = filtered.slice(0, 25);
+    } else {
+        displayMembers.sort(function(a, b) {
+            return a.name.localeCompare(b.name, "ko");
+        });
+    }
+
+    var bodyHtml = "";
+    for (var i = 0; i < displayMembers.length; i++) {
+        var m = displayMembers[i];
+        var row = '<div class="table-row">';
+        row += '<div class="col-cell-name" title="' + m.name + ' (' + m.cate + '회원)"><span style="color:#64748b; font-size:0.85rem; margin-right:4px;">' + (i + 1) + '.</span> ' + m.name + ' <span class="' + m.color + '" style="font-size:0.82rem; margin-left:3px;">(' + m.cate + ')</span></div>';
+        
+        if (currentView === "9") {
+            row += '<div class="col-cell-rate" style="color:#dc2626; font-weight:bold;">-' + Math.round(m.diff) + '%p</div>';
+        } else {
+            row += '<div class="col-cell-rate">' + m.rate + '%</div>';
+        }
+
+        for (var j = 0; j < pageDates.length; j++) {
+            var d = pageDates[j].full;
+            var key = m.no + "-" + d;
+            var val = attMap[key];
+            var mark = "";
+            var cls = "col-cell-att";
+            if (pageIndex === 0 && j === 0) cls += " latest-col";
+            if (val === 1) {
+                mark = "●";
+            } else if (val >= 2 && val <= 6) {
+                mark = "○";
+                cls += " outside";
+            }
+            row += '<div class="' + cls + '">' + mark + '</div>';
+        }
+        row += '</div>';
+        bodyHtml += row;
+    }
+    document.getElementById("table-body").innerHTML = bodyHtml;
+
+    // 네비게이션 화살표 상태 갱신
+    if (pageIndex > 0) btnPrev.classList.remove("hidden");
+    else btnPrev.classList.add("hidden");
+
+    if (pageIndex < totalPages - 1) btnNext.classList.remove("hidden");
+    else btnNext.classList.add("hidden");
+}
+
+function toggleSortMode() {
+    var sel = document.getElementById("view_select");
+    if (sel.value === "5") sel.value = "6";
+    else if (sel.value === "6") sel.value = "5";
+    onViewSelectChange();
+}
+
+function changePage(delta) {
+    var newPage = pageIndex + delta;
+    if (newPage >= 0 && newPage < totalPages) {
+        pageIndex = newPage;
+        document.getElementById("table-wrapper").scrollTop = 0;
+        renderTable();
+    }
+}
+
+window.addEventListener("keydown", function(e) {
+    var modal = document.getElementById("input_box");
+    if (modal && modal.style.display === "block") {
+        if (e.key === "Escape") closeMemberModal();
+        return;
+    }
+    if (e.key === "ArrowRight") changePage(1);
+    if (e.key === "ArrowLeft") changePage(-1);
+});
+
+// 초기 실행
+window.addEventListener("DOMContentLoaded", function() {
+    updateSundayStats();
+    onViewSelectChange();
+});
 </script>
 </body>
 </html>
-
-<?
-mysql_close($connect);
-?>
