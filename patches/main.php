@@ -13,7 +13,20 @@ if($data[0]>0){
 
 $result0=mysql_query("SELECT title, content, eid, value FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl where a.module_srl=3225 and a.is_notice='N' and b.eid='to' and b.value<=$today order by b.value desc limit 1");
 $result1=mysql_query("SELECT title, content, c.value FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl left join `xe_document_extra_vars` c on a.document_srl=c.document_srl where a.module_srl=304 and a.is_notice='N' and b.eid='to' and c.value>=$today order by b.value limit 4");
+if(!$result1 || mysql_num_rows($result1) == 0) {
+	$result1=mysql_query("SELECT title, content, c.value FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl left join `xe_document_extra_vars` c on a.document_srl=c.document_srl where a.module_srl=304 and a.is_notice='N' and b.eid='to' and c.eid='to' order by b.value desc limit 4");
+}
 $result2=mysql_query("SELECT title, content, eid, value FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl where a.module_srl=200 and a.is_notice='N' and b.eid='to' and b.value>=$today order by a.document_srl desc");
+if(!$result2 || mysql_num_rows($result2) == 0) {
+	$latest_row=mysql_fetch_array(mysql_query("SELECT max(b.value) as max_val FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl where a.module_srl=200 and a.is_notice='N' and b.eid='to'"));
+	$max_val=$latest_row['max_val'];
+	if($max_val) {
+		$result2=mysql_query("SELECT title, content, eid, value FROM `xe_documents` a left join `xe_document_extra_vars` b on a.document_srl=b.document_srl where a.module_srl=200 and a.is_notice='N' and b.eid='to' and b.value='$max_val' order by a.document_srl desc");
+	}
+	if(!$result2 || mysql_num_rows($result2) == 0) {
+		$result2=mysql_query("SELECT title, content FROM `xe_documents` where module_srl=200 and is_notice='N' order by document_srl desc limit 4");
+	}
+}
 
 $i=1;
 while($data=@mysql_fetch_array($result1)) {
