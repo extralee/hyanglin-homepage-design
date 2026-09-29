@@ -85,7 +85,7 @@ CPU_TREND_HTML=""
 if [ -f "$METRICS_DB" ]; then
     while IFS='|' read -r ts cpu mem; do
         [ -z "$ts" ] && continue
-        time_display=$(date -d "$ts" +'%H:%M' 2>/dev/null || echo "$ts")
+        time_display=$(date -d "$ts" +'%m/%d %H:%M' 2>/dev/null || echo "$ts")
         
         usage_num=$(echo "$cpu" | cut -d'.' -f1)
         if [[ "$usage_num" =~ ^[0-9]+$ ]] && [ "$usage_num" -ge 90 ]; then
@@ -108,8 +108,8 @@ try:
     cur.execute('''
         SELECT timestamp, cpuUsage, memoryUsage 
         FROM system_metrics 
-        WHERE timestamp >= datetime('now', '-24 hours') 
-        ORDER BY timestamp ASC;
+        WHERE timestamp >= datetime('now', 'localtime', '-24 hours') 
+        ORDER BY timestamp DESC;
     ''')
     for row in cur.fetchall():
         print(f'{row[0]}|{row[1]}|{row[2]}')
@@ -495,7 +495,7 @@ import sqlite3
 try:
     conn = sqlite3.connect('$METRICS_DB')
     cur = conn.cursor()
-    cur.execute('''DELETE FROM system_metrics WHERE timestamp < datetime('now', '-1 year');''')
+    cur.execute('''DELETE FROM system_metrics WHERE timestamp < datetime('now', 'localtime', '-1 year');''')
     conn.commit()
     conn.close()
     print('Old metrics purge completed.')
