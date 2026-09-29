@@ -9,8 +9,8 @@ if [ ! -f "AGENTS.md" ] && [ ! -f "1prd.md" ]; then
 fi
 echo "✅ SSOT (AGENTS.md) 확인 완료."
 
-# 2. .bin 내 스크립트 문법 검사 (Syntax Check)
-for script in .bin/*.sh; do
+# 2. .bin 내 스크립트 및 Git Hook 문법 검사 (Syntax Check)
+for script in .bin/*.sh .bin/hooks/*; do
     if [ -f "$script" ]; then
         bash -n "$script"
         if [ $? -ne 0 ]; then
@@ -19,7 +19,16 @@ for script in .bin/*.sh; do
         fi
     fi
 done
-echo "✅ 쉘 스크립트 문법 확인 완료."
+echo "✅ 쉘 스크립트 및 Git Hook 문법 확인 완료."
+
+# 2-1. Git Hooks 설치 상태 검증
+if [ -d ".git/hooks" ]; then
+    if [ ! -x ".git/hooks/pre-commit" ] || [ ! -x ".git/hooks/commit-msg" ]; then
+        echo "⚠️ Git Hooks가 설치되지 않았거나 실행 권한이 없습니다. 자동 설치를 실행합니다..."
+        .bin/setup-hooks.sh
+    fi
+    echo "✅ Git Hooks 설치 상태 확인 완료."
+fi
 
 # 3. Docker EOL & Security Check
 echo "🔍 Checking Docker configurations for EOL runtimes and security settings..."

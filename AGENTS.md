@@ -67,8 +67,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **데이터 자산화 (보석화)**: 과거 레거시 데이터를 단순 백업하는 것을 넘어, 향린 역사 자료로 보존하고 자체 LLM 모델 학습 및 Knowledge Base 구축 등 다양한 미래 가치 창출 용도로 활용하기 위함.
 
 ## 2. 하네스 엔지니어링 (Harness Engineering) 규칙
-- **SSOT 준수**: 프로젝트의 기본 설정, 룰, 아키텍처는 항상 이 문서(`1prd.md`)를 기준으로 합니다.
-- **Git Hook 강제**: 모든 커밋 메시지에는 `#이슈번호` 형식의 문자열이 포함되어야 합니다. (`.git/hooks/commit-msg`에 의해 강제됨)
+- **SSOT 준수**: 프로젝트의 기본 설정, 룰, 아키텍처는 항상 이 문서(`AGENTS.md`)를 기준으로 합니다.
+- **신규 홈페이지 개발 저장소 격리 (CRITICAL)**: **새로운 향린 홈페이지(신규 디자인 시안, 반응형 웹, 프로토타입 등)의 모든 개발 작업은 반드시 `hyanglin-26` 저장소(`/home/hyuk/prj/hyanglin/hyanglin-26`)에서만 수행**해야 한다. `hyanglin-legacy`는 구형 레거시(PHP 5.6/XE) 유지보수, 서버 모니터링, 데이터 추출/마이그레이션 전용이며, 신규 디자인 파일 및 프로토타입의 커밋은 Git Hook(`pre-commit`, `commit-msg`)에 의해 자동으로 전면 차단된다.
+- **Git Hook 강제**: 모든 커밋 메시지에는 `#이슈번호` 형식의 문자열이 포함되어야 하며, 신규 홈페이지 관련 작업 커밋은 차단됩니다. (`.git/hooks/commit-msg`, `.git/hooks/pre-commit`에 의해 강제됨)
 - **Deterministic Gate**: `.bin/` 디렉토리 내의 스크립트나 주요 룰 문서를 수정/추가할 경우, 반드시 `.bin/harness-check.sh`를 실행하여 검증을 통과해야 합니다.
 - **TDD 기반**: 작업 시 `1-2-3-tdd-doc-global` 등 설정된 워크플로를 따릅니다.
 

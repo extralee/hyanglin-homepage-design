@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Git commit-msg hook
+# 목적: 1) 이슈 번호 강제 (#이슈번호)
+#       2) 신규 향린 홈페이지 관련 커밋 차단 (hyanglin-26 전용)
+# =============================================================================
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# 1. 정규표현식으로 #[숫자] 패턴이 있는지 확인 (예: #1, #123)
+if ! echo "$COMMIT_MSG" | grep -qE "#[0-9]+"; then
+    echo "================================================================"
+    echo "❌ [Commit Rejected] 커밋 메시지에 '#이슈번호'가 없습니다!"
+    echo "올바른 예시: 'feat: #12 데이터 추출 기능 추가'"
+    echo "================================================================"
+    exit 1
+fi
+
+# 2. 신규 홈페이지 관련 커밋 메시지 차단 (단, 이관/삭제/제거/차단 관련 커밋은 예외 허용)
+# Longest match first (ERE compatible):
+BLOCKED_KEYWORDS="(새로운[[:space:]]*향린[[:space:]]*홈페이지|새로운[[:space:]]*홈페이지|신규[[:space:]]*홈페이지|신규[[:space:]]*디자인[[:space:]]*시안|신규[[:space:]]*디자인|신규[[:space:]]*시안|디자인[[:space:]]*시안|새[[:space:]]*홈페이지|new_design|prototype)"
+EXEMPT_KEYWORDS="(이관|삭제|제거|차단|정리|clean|remove|delete|migrate)"
+
+if echo "$COMMIT_MSG" | grep -qiE "$BLOCKED_KEYWORDS"; then
+    if ! echo "$COMMIT_MSG" | grep -qiE "$EXEMPT_KEYWORDS"; then
+        echo "================================================================"
+        echo "❌ [Commit Rejected] 신규 홈페이지 관련 작업은"
+        echo "   'hyanglin-26' 레포지토리에서 커밋해야 합니다!"
+        echo "   저장소 경로: /home/hyuk/prj/hyanglin/hyanglin-26"
+        echo "----------------------------------------------------------------"
+        echo "감지된 커밋 메시지:"
+        echo "   $COMMIT_MSG"
+        echo "================================================================"
+        exit 1
+    fi
+fi
+
+exit 0
