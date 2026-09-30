@@ -318,24 +318,37 @@ XE 레이아웃 (xe_kimtajo_layout)
 
 가비아 프로덕션 서버에서 운영 중인 13개 전체 웹 서비스와 핵심 인프라의 장애를 실시간으로 자동 감지하여, 관리자 텔레그램 슈퍼그룹으로 즉각 경보를 발송하는 시스템입니다.
 
-### 10-1. 시스템 아키텍처 및 크론 등록
+### 10-1. 2중 감시 체계 (Two-Tier Monitoring) 및 크론 등록
+
+서버가 다운되면 서버 내부 크론도 정지하므로, **서버 내부 상세 점검**과 **로컬 PC 외부 생존 감시**의 2중 감시망으로 운영됩니다.
 
 ```
-[서버 내부 Cron (10분 주기)] 
+[1계층: 서버 내부 Cron (10분 주기)] 
   └── /home/wonhyukc/scripts/health-check-cron.sh
        ├── 13개 웹 엔드포인트 응답 검사 (8080-8091, 3000)
        ├── 인프라 리소스 검사 (디스크 사용률, Docker 컨테이너 수)
        ├── 정상 (All PASS) → /data/log/health-check.log 기록 (알림 생략)
        └── 장애 감지 (FAIL ≥ 1) → Telegram Bot API 호출 → 텔레그램 슈퍼그룹 실시간 경보
+
+[2계층: 로컬 PC 외부 감시 (5분 주기)]
+  └── .bin/alive-check.sh (systemd user timer: hyanglin-alive-check.timer)
+       ├── 최후 방어선: 외부에서 https://www.hyanglin.org 생존 확인 (Timeout 20s)
+       ├── 서버 다운(응답 불가/비정상 HTTP) 감지 → 텔레그램 슈퍼그룹 즉시 경보
+       └── 서버 복구 시 → 복구 알림 전송 (상태 파일 기반 중복 알림 방지)
 ```
 
-- **로컬 저장소 (SSOT)**: [`server-scripts/health-check-cron.sh`](../server-scripts/health-check-cron.sh)
-- **서버 실구동 경로**: `/home/wonhyukc/scripts/health-check-cron.sh`
-- **실행 로그 경로**: `/data/log/health-check.log`
-- **Crontab 등록 상태**:
-  ```bash
-  */10 * * * * /home/wonhyukc/scripts/health-check-cron.sh >> /data/log/health-check.log 2>&1
-  ```
+- **1계층 (서버 내부 크론)**:
+  - **로컬 저장소 (SSOT)**: [`server-scripts/health-check-cron.sh`](../server-scripts/health-check-cron.sh)
+  - **서버 실구동 경로**: `/home/wonhyukc/scripts/health-check-cron.sh`
+  - **실행 로그 경로**: `/data/log/health-check.log`
+  - **Crontab 등록 상태**:
+    ```bash
+    */10 * * * * /home/wonhyukc/scripts/health-check-cron.sh >> /data/log/health-check.log 2>&1
+    ```
+- **2계층 (로컬 외부 감시)**:
+  - **스크립트 경로**: `.bin/alive-check.sh`
+  - **systemd 서비스/타이머**: `~/.config/systemd/user/hyanglin-alive-check.{service,timer}`
+  - **실행 주기**: 5분마다 (`OnUnitActiveSec=5min`, `Persistent=true`)
 
 ### 10-2. 검증 대상 항목 (총 16개 지표)
 
