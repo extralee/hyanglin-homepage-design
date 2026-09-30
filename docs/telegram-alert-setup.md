@@ -250,3 +250,19 @@ chmod +x /home/wonhyukc/scripts/health-check-cron.sh
 | `400 Bad Request: group chat was upgraded to a supergroup` | 그룹이 슈퍼그룹으로 승격되며 ID 변경 | `getUpdates` API를 호출하여 `-100...`으로 시작하는 새 ID로 교체 |
 | 알림이 영영 안 옴 | 실패 항목이 없어 침묵 중인 정상 상태 | 평소에는 로그(`/data/log/health-check.log`)에만 찍히며, FAIL일 때만 발송됨 |
 | 크론에서만 텔레그램 발송 실패 | 크론 환경변수에서 `curl` 경로 미인식 | 스크립트 상단에 `PATH=/usr/local/bin:/usr/bin:/bin` 추가 |
+
+---
+
+## [8단계] 로컬 PC 설정(`telegram.conf`) 및 슈퍼그룹 ID 동기화
+
+로컬 PC에서 실행되는 스크립트([`.bin/alive-check.sh`](../.bin/alive-check.sh) 및 [`.agents/skills/health-check/scripts/health-check.sh`](../.agents/skills/health-check/scripts/health-check.sh))는 `~/.config/hyanglin/telegram.conf` 파일을 참조합니다.
+
+```bash
+# ~/.config/hyanglin/telegram.conf
+TELEGRAM_BOT_TOKEN="8037347881:AAEXiAPgEC3iEzv-6MwNC0AN2ughbtZqm3E"
+TELEGRAM_CHAT_ID="-1004408048565" # 반드시 -100으로 시작하는 슈퍼그룹 ID여야 함
+```
+
+> [!WARNING]
+> 텔레그램 방이 슈퍼그룹으로 승격된 후 로컬 `telegram.conf`에 이전 일반 그룹 ID(예: `-5458760122`)가 남아있으면, 로컬 외부 생존 감시 스크립트가 장애 알림 발송 시 `400 Bad Request`로 실패하게 됩니다. 서버 측 스크립트와 로컬 설정 파일 모두 최신 슈퍼그룹 Chat ID를 유지해야 합니다.
+
