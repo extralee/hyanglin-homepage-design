@@ -15,10 +15,12 @@ $dbui->view_head("업무일지");
 
 <table cellspacing="5" cellpadding="5" class="dbui_list">
 <tr><td>
-<?
-$url="http://127.0.0.1/reports/work_list_report.php?mid=".$member[mb_id]."&no=".$no."&del=".$del;
-//$jdata = json_decode(file_get_contents($url), true);
-//echo "+++".$jdata['b']."+++";
+$no = isset($_REQUEST["no"]) ? intval($_REQUEST["no"]) : 0;
+$del = isset($_REQUEST["del"]) ? intval($_REQUEST["del"]) : 0;
+$page = isset($_REQUEST["page"]) ? intval($_REQUEST["page"]) : 1;
+$mid = isset($member["mb_id"]) ? urlencode($member["mb_id"]) : "";
+
+$url = "http://127.0.0.1/reports/work_list_report.php?mid={$mid}&no={$no}&del={$del}&page={$page}";
 $jdata = file_get_contents($url);
 echo $jdata;
 ?>
