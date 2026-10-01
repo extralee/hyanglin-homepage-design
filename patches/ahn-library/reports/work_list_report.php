@@ -22,10 +22,11 @@ if(!$no||$del==1) {
 	$end_time="17";
 	$end_minute="00";
 }
-$data=mysql_fetch_array(mysql_query("SELECT mb_name, mb_level FROM `g4_member` where mb_id='".$mid."'"));
-$w_name=$data[mb_name];
-$mb_level=$data[mb_level];
-//echo $data[mb_name];
+$login_res = mysql_query("SELECT mb_name, mb_level FROM `g4_member` where mb_id='".$mid."'");
+$login_member = $login_res ? mysql_fetch_array($login_res) : null;
+$login_name = $login_member ? $login_member['mb_name'] : "";
+$mb_level = $login_member ? intval($login_member['mb_level']) : 0;
+$w_name = $login_name;
 
 if($no) {
 	$temp=mysql_fetch_array(mysql_query("SELECT * FROM `work_list` where no='".$no."'"));
@@ -176,7 +177,7 @@ if ($list_num_rows > 0) {
 		echo "<td style='text-align:right; padding-right:22px;'>$data[user_num]</td>";
 		echo "<td style='padding:4px 6px;'>$data[content]</td>";
 		echo "<td style='text-align:center;'>";
-		if($data['w_name'] == $w_name || $mb_level >= 10) {
+		if($login_name != '' && trim($data['w_name']) == trim($login_name)) {
 			echo "<a href='/admin/work_list.php?no=$data[no]&page=$page'>[수정]</a> ";
 			echo "<a href='/admin/work_list.php?del=1&no=$data[no]&page=$page' onclick='return confirm(\"정말 삭제하시겠습니까?\");'>[삭제]</a>";
 		}
