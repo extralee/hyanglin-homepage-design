@@ -15,6 +15,7 @@ $dbui->view_head("업무일지");
 
 <table cellspacing="5" cellpadding="5" class="dbui_list">
 <tr><td>
+<?php
 $no = isset($_REQUEST["no"]) ? intval($_REQUEST["no"]) : 0;
 $del = isset($_REQUEST["del"]) ? intval($_REQUEST["del"]) : 0;
 $page = isset($_REQUEST["page"]) ? intval($_REQUEST["page"]) : 1;
