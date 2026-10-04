@@ -5,7 +5,7 @@
 > 디스크 구조, fstab, 커널·패키지 관리, 주요 이력 등은 반드시 그 문서를 먼저 확인하세요.
 > 이 문서는 Docker/Nginx/XE 애플리케이션 계층의 운영 절차에 집중합니다.
 >
-> 최종 업데이트: 2026-09-10
+> 최종 업데이트: 2026-10-05
 
 ---
 
@@ -22,12 +22,28 @@
 
 ## 2. Docker 컨테이너 맵
 
-| 컨테이너 이름 | 이미지 | 포트 | 역할 | Compose 위치 |
+> 2026-10-05 `docker ps` 실측 기준. 총 18개 컨테이너, 4개 compose 프로젝트.
+
+| 컨테이너 이름 | 이미지 | 포트 | 네트워크 | 역할 |
 |---|---|---|---|---|
-| `hyanglin-home-src-web-1` | `hyanglin-home-src-web` | `8080→80` | PHP 5.6 XE 메인 홈페이지 | `~/hyanglin-home-src` |
-| `hyanglin-home-infra-nginx-1` | `nginx:alpine` | `80,443` | HTTPS 프록시 + SSL | `~/hyanglin-home-infra` |
-| `hyanglin-home-infra-legacy-mysql-1` | `mysql:5.7` | `3307→3306` | XE 데이터베이스 | `~/hyanglin-home-infra` |
-| `hyanglin-home-infra-certbot-1` | `certbot/certbot` | - | Let's Encrypt 인증서 | `~/hyanglin-home-infra` |
+| `hyanglin-home-infra-nginx-1` | `nginx:alpine` | `80,443` | `hyanglin-home-infra_default` | HTTPS 프록시 + SSL (전 사이트 분기) |
+| `hyanglin-home-infra-certbot-1` | `certbot/certbot` | - | `hyanglin-home-infra_default` | Let's Encrypt 인증서 |
+| `hyanglin-home-infra-legacy-mysql-1` | `mysql:5.7` | `127.0.0.1:3307→3306` | `hyanglin-home-infra_default` | MySQL 5.7 컨테이너 (상세 §6 참조) |
+| `pgsql` | `postgres:15-alpine` | `5432` | `bridge` | PostgreSQL (재정·시네마버킷리스트용) |
+| `hyanglin-home-src-web-1` | `hyanglin-home-src-web` | `8080→80` | `hyanglin-home-src_default` | PHP 5.6 XE 메인 홈페이지 |
+| `hyanglin-home-src-ongallery-1` | `hyanglin-home-src-ongallery` | `8081→80` | `hyanglin-home-src_default` | 이양노 갤러리 |
+| `hyanglin-home-src-parkhk-1` | `hyanglin-home-src-parkhk` | `8082→80` | `hyanglin-home-src_default` | 박형규 기념사업회 |
+| `hyanglin-home-src-haerangart-1` | `hyanglin-home-src-haerangart` | `8083→80` | `hyanglin-home-src_default` | 해랑 |
+| `hyanglin-home-src-educrit-1` | `hyanglin-home-src-educrit` | `8084→80` | `hyanglin-home-src_default` | 교육비평 |
+| `hyanglin-home-src-gilmok-1` | `hyanglin-home-src-gilmok` | `8085→80` | `hyanglin-home-src_default` | 길목 |
+| `hyanglin-home-src-simwon-1` | `hyanglin-home-src-simwon` | `8086→80` | `hyanglin-home-src_default` | 심원 아카이브 |
+| `hyanglin-home-src-ahn-library-1` | `hyanglin-home-src-ahn-library` | `8087→80` | `hyanglin-home-src_default` | 안병무도서관 (레거시 서빙 중) |
+| `hyanglin-home-src-rorobrain-1` | `hyanglin-home-src-rorobrain` | `8088→80` | `hyanglin-home-src_default` | 로로브레인 |
+| `hyanglin-home-src-bbook-1` | `hyanglin-home-src-bbook` | `8089→80` | `hyanglin-home-src_default` | 비북 |
+| `hyanglin-home-src-moviediary-1` | `hyanglin-home-src-moviediary` | `8090→80` | `hyanglin-home-src_default` | 시네마버킷리스트 레거시 경로 (`/home` 등, XE) |
+| `hyanglin-home-src-cnblaw-1` | `hyanglin-home-src-cnblaw` | `8091→80` | `hyanglin-home-src_default` | 법무법인오늘 |
+| `cinemabucketlist-web` | `cinemabucketlist-cinemabucketlist-web` | `8092→3000` | `cinemabucketlist_default` | 시네마버킷리스트 Next.js 메인 (서버 경로 `/home/extralee/cinemabucketlist`) |
+| `ahn-library-web` | `ahn-library-new-ahn-library-web` | `8093→3000` | `ahn-library-new_default` | nginx 미연결, 프로덕션 미서빙 |
 
 ---
 

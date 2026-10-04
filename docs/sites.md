@@ -1,7 +1,7 @@
 # 🌐 가비아 프로덕션 서버 사이트 목록
 
 > **서버**: 45.115.154.229 (가비아 VPS)
-> **마지막 업데이트**: 2026-09-24
+> **마지막 업데이트**: 2026-10-05
 
 ---
 
@@ -16,6 +16,7 @@
 | 3 | **이양노 갤러리** | [ongallery.co.kr](https://www.ongallery.co.kr/) | 8081 | ongallery | XE (PHP 5.6) | 이양노 10주기 회고전 |
 | 4 | **향린 재정 시스템** | [finance.hyanglin.org](https://finance.hyanglin.org/) | 3000 | Host PM2 (Next.js) | Next.js | 지출결의서 및 재정 관리 (**비-Docker**) |
 | 5 | **법무법인오늘** | [법무법인오늘.com](https://www.xn--wh1b76ni4aba943jj2b.com/home/) | 8091 | cnblaw | XE (PHP 5.6) | 법무법인 오늘 (한글 도메인, 퓨니코드: xn--wh1b76ni4aba943jj2b.com) |
+| 6 | **시네마 버킷리스트** | [cinemabucketlist.com](https://www.cinemabucketlist.com/) | 8092 (+8090 레거시 경로) | cinemabucketlist-web | Next.js 15 | 신버전 메인 서비스 중. `/home`·`/schedule`·`/contents`·`/old-movies/`·`/phpMyAdmin`은 레거시 XE(8090, moviediary)로 프록시 |
 
 ---
 
@@ -35,14 +36,13 @@
 
 | # | 사이트명 | 도메인 | 포트 | 컨테이너 | CMS | 설명 |
 |---|---|---|---|---|---|---|
-| 5 | **박형규 기념사업회** | [parkhyungkyu.org](https://www.parkhyungkyu.org/) | 8082 | parkhk | XE (PHP 5.6) | (사)박형규목사기념사업회 |
-| 6 | **해랑** | [haerangart.com](https://www.haerangart.com/) | 8083 | haerangart | 그누보드4 (PHP 5.6) | 해랑 예술 사이트 |
-| 7 | **교육비평** | [educrit.org](https://www.educrit.org/) | 8084 | educrit | XE (PHP 5.6) | 교육비평 저널 |
-| 8 | **길목** | [gilmok.org](https://www.gilmok.org/) | 8085 | gilmok | XE (PHP 5.6) | 길목 / 심심프로그램 (simsimprogram.org 포함) |
-| 9 | **심원 아카이브** | [simwon.org](https://www.simwon.org/) | 8086 | simwon | XE (PHP 5.6) | 심원 안병무 아카이브 |
-| 10 | **로로브레인** | [rorobrain.com](https://www.rorobrain.com/) | 8088 | rorobrain | 그누보드4 (PHP 5.6) | 로로브레인 (RoRo 이규성 운영) |
-| 11 | **비북** | [b-book.co.kr](https://www.b-book.co.kr/) | 8089 | bbook | 그누보드4 (PHP 5.6) | 비북 출판 |
-| 12 | **시네마 버킷리스트** | [cinemabucketlist.com](https://www.cinemabucketlist.com/) | 8090 | moviediary | 그누보드4 (PHP 5.6) | 영화 버킷리스트 |
+| 7 | **박형규 기념사업회** | [parkhyungkyu.org](https://www.parkhyungkyu.org/) | 8082 | parkhk | XE (PHP 5.6) | (사)박형규목사기념사업회 |
+| 8 | **해랑** | [haerangart.com](https://www.haerangart.com/) | 8083 | haerangart | 그누보드4 (PHP 5.6) | 해랑 예술 사이트 |
+| 9 | **교육비평** | [educrit.org](https://www.educrit.org/) | 8084 | educrit | XE (PHP 5.6) | 교육비평 저널 |
+| 10 | **길목** | [gilmok.org](https://www.gilmok.org/) | 8085 | gilmok | XE (PHP 5.6) | 길목 / 심심프로그램 (simsimprogram.org 포함) |
+| 11 | **심원 아카이브** | [simwon.org](https://www.simwon.org/) | 8086 | simwon | XE (PHP 5.6) | 심원 안병무 아카이브 |
+| 12 | **로로브레인** | [rorobrain.com](https://www.rorobrain.com/) | 8088 | rorobrain | 그누보드4 (PHP 5.6) | 로로브레인 (RoRo 이규성 운영) |
+| 13 | **비북** | [b-book.co.kr](https://www.b-book.co.kr/) | 8089 | bbook | 그누보드4 (PHP 5.6) | 비북 출판 |
 
 ---
 
@@ -54,7 +54,7 @@
 | **Certbot** | - | certbot | Let's Encrypt SSL 자동 갱신 (12시간 주기) |
 | **Legacy MySQL** | 127.0.0.1:3307 | legacy-mysql | MySQL 5.7 (KT 서버 이관 DB, Docker) |
 | **Host MySQL** | 127.0.0.1:3306 | Host 서비스 | MySQL 8.x (메인 DB, 비-Docker) |
-| **PostgreSQL** | 5432 | pgsql | PostgreSQL (재정 시스템용, Docker) |
+| **PostgreSQL** | 5432 | pgsql | PostgreSQL (재정·시네마버킷리스트용, Docker) |
 
 ---
 
@@ -86,8 +86,10 @@
 8087 → 안병무도서관 (Docker PHP)
 8088 → 로로브레인 (Docker PHP)
 8089 → 비북 (Docker PHP)
-8090 → 시네마 버킷리스트 (Docker PHP)
+8090 → 시네마 버킷리스트 레거시 경로 (Docker PHP, /home·/schedule·/contents·/old-movies/·/phpMyAdmin)
 8091 → 법무법인오늘 (Docker PHP)
+8092 → 시네마 버킷리스트 Next.js 메인 (Docker)
+8093 → ahn-library-web (nginx 미연결, 프로덕션 미서빙)
 ```
 
 ---
@@ -132,7 +134,7 @@
 | SSL (HTTPS) | ✅ 전 도메인 적용, 자동 갱신 |
 | 보안 헤더 | ✅ X-Frame-Options, HSTS, XSS-Protection, nosniff |
 | SQL Injection WAF | ✅ nginx에서 시그니처 패턴 차단 |
-| 아카이브 POST 차단 | ✅ 8개 읽기전용 사이트 |
+| 아카이브 POST 차단 | ✅ 7개 읽기전용 사이트 |
 | DB 외부 접근 | ✅ MySQL 127.0.0.1 바인딩 |
 | phpMyAdmin 차단 | ✅ nginx 403 |
 | config.php 차단 | ✅ nginx 403 |
