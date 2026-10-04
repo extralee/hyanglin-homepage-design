@@ -6,7 +6,7 @@
 # 사용법:
 #   bash .agents/skills/health-check/scripts/health-check.sh [1|2]
 #   - 1단계 (기본): 향린 재정 + 향린 홈 + 기본 인프라
-#   - 2단계 (all):  이관된 전체 13개 웹 사이트 + 전체 인프라
+#   - 2단계 (all):  이관된 전체 14개 웹 사이트 + 전체 인프라
 # ─────────────────────────────────────────────
 
 # ── 사용법 출력 ────────────────────────────────
@@ -25,7 +25,7 @@ usage() {
               • 데이터베이스 (MySQL 호스트 3306, PostgreSQL Docker 5432)
   2, all    2단계 — 전체 서비스
               • 1단계 전체 항목 포함
-              • 이관된 13개 웹 사이트 HTTPS 응답 및 SSL 인증서 전수 검사
+              • 이관된 14개 웹 사이트 HTTPS 응답 및 SSL 인증서 전수 검사
               • Docker 컨테이너 13+개 구동 여부 검증
 
 옵션:
@@ -330,7 +330,7 @@ check_ssl "finance.hyanglin.org" "재정 SSL 인증서"
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [[ "$STAGE" == "2" || "$STAGE" == "all" ]]; then
   echo ""
-  echo "  [확장] 이관된 전체 웹 서비스 (11개 추가 사이트)"
+  echo "  [확장] 이관된 전체 웹 서비스 (12개 추가 사이트)"
   echo "  ──────────────────────────────────────────────"
 
   # 사이트 목록 정의: 이름 | 도메인 | 기본 경로 | 내부 포트 | SSL 검사 도메인
@@ -345,7 +345,8 @@ if [[ "$STAGE" == "2" || "$STAGE" == "all" ]]; then
     "심원 아카이브|www.simwon.org|/|8086|www.simwon.org"
     "로로브레인|www.rorobrain.com|/|8088|www.rorobrain.com"
     "비북|www.b-book.co.kr|/|8089|www.b-book.co.kr"
-    "시네마 버킷리스트|www.cinemabucketlist.com|/|8090|www.cinemabucketlist.com"
+    "시네마 버킷리스트(Next)|www.cinemabucketlist.com|/|8092|www.cinemabucketlist.com"
+    "시네마 버킷리스트(레거시)|www.cinemabucketlist.com|/home/|8090|www.cinemabucketlist.com"
   )
 
   for site_entry in "${SITES[@]}"; do

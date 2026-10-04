@@ -25,7 +25,7 @@ description: 향린교회 프로덕션 서버(45.115.154.229)의 주요 서비�
 # 1단계: 향린 메인 홈페이지 + 향린 재정 + 기본 인프라 (기본값)
 bash .agents/skills/health-check/scripts/health-check.sh 1
 
-# 2단계: 이관된 전체 13개 웹 사이트 + 전체 인프라
+# 2단계: 이관된 전체 14개 웹 사이트 + 전체 인프라
 bash .agents/skills/health-check/scripts/health-check.sh 2
 # 또는
 bash .agents/skills/health-check/scripts/health-check.sh all
@@ -55,7 +55,7 @@ bash .agents/skills/health-check/scripts/health-check.sh all
 
 ---
 
-### [2단계] 전체 서비스 (이관된 전체 13개 웹 사이트)
+### [2단계] 전체 서비스 (이관된 전체 14개 웹 사이트)
 1단계 항목 전체를 포함하며, 가비아 서버로 이관된 모든 웹 사이트의 가용성과 SSL을 전수 검사합니다.
 
 | # | 사이트명 | 도메인 | 내부 포트 | 컨테이너 |
@@ -72,7 +72,8 @@ bash .agents/skills/health-check/scripts/health-check.sh all
 | 10 | **심원 아카이브** | `www.simwon.org` | 8086 | simwon |
 | 11 | **로로브레인** | `www.rorobrain.com` | 8088 | rorobrain |
 | 12 | **비북** | `www.b-book.co.kr` | 8089 | bbook |
-| 13 | **시네마 버킷리스트** | `www.cinemabucketlist.com` | 8090 | moviediary |
+| 13 | **시네마 버킷리스트 (Next)** | `www.cinemabucketlist.com` | 8092 | cinemabucketlist-web |
+| 14 | **시네마 버킷리스트 (레거시)** | `www.cinemabucketlist.com/home/` | 8090 | moviediary |
 
 - 각 사이트별 외부 HTTPS 정상 응답(200) 확인 및 내부 포트 폴백 점검
 - 각 도메인별 Let's Encrypt SSL 인증서 잔여 기간 검사
