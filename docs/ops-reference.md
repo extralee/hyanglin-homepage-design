@@ -40,7 +40,7 @@
 | `hyanglin-home-src-ahn-library-1` | `hyanglin-home-src-ahn-library` | `8087→80` | `hyanglin-home-src_default` | 안병무도서관 (레거시 서빙 중) |
 | `hyanglin-home-src-rorobrain-1` | `hyanglin-home-src-rorobrain` | `8088→80` | `hyanglin-home-src_default` | 로로브레인 |
 | `hyanglin-home-src-bbook-1` | `hyanglin-home-src-bbook` | `8089→80` | `hyanglin-home-src_default` | 비북 |
-| `hyanglin-home-src-moviediary-1` | `hyanglin-home-src-moviediary` | `8090→80` | `hyanglin-home-src_default` | 시네마버킷리스트 레거시 경로 (`/home` 등, XE) |
+| `hyanglin-home-src-moviediary-1` | `hyanglin-home-src-moviediary` | `8090→80` | `hyanglin-home-src_default` | 시네마버킷리스트 phpMyAdmin 전용 (레거시 경로 410 차단 관찰 #103, XE 유지 중) |
 | `hyanglin-home-src-cnblaw-1` | `hyanglin-home-src-cnblaw` | `8091→80` | `hyanglin-home-src_default` | 법무법인오늘 |
 | `cinemabucketlist-web` | `cinemabucketlist-cinemabucketlist-web` | `8092→3000` | `cinemabucketlist_default` | 시네마버킷리스트 Next.js 메인 (서버 경로 `/home/extralee/cinemabucketlist`) |
 | `ahn-library-web` | `ahn-library-new-ahn-library-web` | `8093→3000` | `ahn-library-new_default` | nginx 미연결, 프로덕션 미서빙 |

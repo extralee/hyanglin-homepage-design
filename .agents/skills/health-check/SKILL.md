@@ -73,7 +73,7 @@ bash .agents/skills/health-check/scripts/health-check.sh all
 | 11 | **로로브레인** | `www.rorobrain.com` | 8088 | rorobrain |
 | 12 | **비북** | `www.b-book.co.kr` | 8089 | bbook |
 | 13 | **시네마 버킷리스트 (Next)** | `www.cinemabucketlist.com` | 8092 | cinemabucketlist-web |
-| 14 | **시네마 버킷리스트 (레거시)** | `www.cinemabucketlist.com/home/` | 8090 | moviediary |
+| 14 | **시네마 버킷리스트 (레거시 410)** | `www.cinemabucketlist.com/home/` → 410 | 8090 (내부 대기) | moviediary |
 
 - 각 사이트별 외부 HTTPS 정상 응답(200) 확인 및 내부 포트 폴백 점검
 - 각 도메인별 Let's Encrypt SSL 인증서 잔여 기간 검사

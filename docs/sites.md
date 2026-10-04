@@ -16,7 +16,7 @@
 | 3 | **이양노 갤러리** | [ongallery.co.kr](https://www.ongallery.co.kr/) | 8081 | ongallery | XE (PHP 5.6) | 이양노 10주기 회고전 |
 | 4 | **향린 재정 시스템** | [finance.hyanglin.org](https://finance.hyanglin.org/) | 3000 | Host PM2 (Next.js) | Next.js | 지출결의서 및 재정 관리 (**비-Docker**) |
 | 5 | **법무법인오늘** | [법무법인오늘.com](https://www.xn--wh1b76ni4aba943jj2b.com/home/) | 8091 | cnblaw | XE (PHP 5.6) | 법무법인 오늘 (한글 도메인, 퓨니코드: xn--wh1b76ni4aba943jj2b.com) |
-| 6 | **시네마 버킷리스트** | [cinemabucketlist.com](https://www.cinemabucketlist.com/) | 8092 (+8090 레거시 경로) | cinemabucketlist-web | Next.js 15 | 신버전 메인 서비스 중. `/home`·`/schedule`·`/contents`·`/old-movies/`·`/phpMyAdmin`은 레거시 XE(8090, moviediary)로 프록시 |
+| 6 | **시네마 버킷리스트** | [cinemabucketlist.com](https://www.cinemabucketlist.com/) | 8092 (+8090 PMA 전용) | cinemabucketlist-web | Next.js 15 | 신버전 메인 서비스 중. `/home`·`/schedule`·`/contents`·`/old-movies/`는 410 차단 관찰 중(#103), `/phpMyAdmin`만 레거시 XE(8090, moviediary)로 유지 |
 
 ---
 
@@ -86,7 +86,7 @@
 8087 → 안병무도서관 (Docker PHP)
 8088 → 로로브레인 (Docker PHP)
 8089 → 비북 (Docker PHP)
-8090 → 시네마 버킷리스트 레거시 경로 (Docker PHP, /home·/schedule·/contents·/old-movies/·/phpMyAdmin)
+8090 → 시네마 버킷리스트 phpMyAdmin 전용 (Docker PHP, 나머지 레거시 경로 410 차단 #103)
 8091 → 법무법인오늘 (Docker PHP)
 8092 → 시네마 버킷리스트 Next.js 메인 (Docker)
 8093 → ahn-library-web (nginx 미연결, 프로덕션 미서빙)

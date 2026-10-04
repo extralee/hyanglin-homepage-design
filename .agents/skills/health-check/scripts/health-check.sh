@@ -346,7 +346,6 @@ if [[ "$STAGE" == "2" || "$STAGE" == "all" ]]; then
     "로로브레인|www.rorobrain.com|/|8088|www.rorobrain.com"
     "비북|www.b-book.co.kr|/|8089|www.b-book.co.kr"
     "시네마 버킷리스트(Next)|www.cinemabucketlist.com|/|8092|www.cinemabucketlist.com"
-    "시네마 버킷리스트(레거시)|www.cinemabucketlist.com|/home/|8090|www.cinemabucketlist.com"
   )
 
   for site_entry in "${SITES[@]}"; do
@@ -354,6 +353,14 @@ if [[ "$STAGE" == "2" || "$STAGE" == "all" ]]; then
     check_web_endpoint "$s_name" "$s_domain" "$s_path" "$s_port"
     check_ssl "$s_ssl" "${s_name} SSL"
   done
+
+  # 시네마 버킷리스트 레거시 경로 차단 확인 (#103 관찰: 외부 410 기대)
+  legacy_ext=$(curl -s -k -o /dev/null -w '%{http_code}' --max-time 15 "https://www.cinemabucketlist.com/home/" 2>/dev/null || echo "000")
+  if [[ "$legacy_ext" == "410" ]]; then
+    result PASS "시네마 버킷리스트(레거시 차단)" "HTTP 410 차단 정상 (#103 관찰 중)"
+  else
+    result FAIL "시네마 버킷리스트(레거시 차단)" "외부 HTTP ${legacy_ext} (410 기대)"
+  fi
 fi
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
